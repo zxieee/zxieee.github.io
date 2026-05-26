@@ -97,7 +97,7 @@
             </div>
             <p class="gate-error" id="gate-error" aria-live="assertive"></p>
           </form>
-          <p class="gate-hint">Or <a href="/cdn-cgi/l/email-protection#ee969483dfdeded6ae89838f8782c08d8183d19d9b8c848b8d9ad3a38f89878dcbdcde99819c8acbdcde88819ccbdcde97819b9ccbdcde9e819c9a8881828781c88c818a97d3a687cbdcdeaf80898b828fcbdcadcbdeafcbdeafad819b828acbdcdea7cbdcde898b9acbdcde9a868bcbdcde838f89878dcbdcde99819c8acbdcde9a81cbdcde9d8b8bcbdcde97819b9ccbdcde9e819c9a8881828781cbdda8cbdeafcbdeafba868f80859dcbdcdf" class="gate-link">talk</a> to Angela.</p>
+          <p class="gate-hint">Or <a href="/cdn-cgi/l/email-protection#b0c8cadd81808088f0d7ddd1d9dc9ed3dfdd8fc3c5d2dad5d3c48dfdd1d7d9d3958280c7dfc2d4958280d6dfc2958280c9dfc5c2958280c0dfc2c4d6dfdcd9df96d2dfd4c98df8d9958280f1ded7d5dcd19582f39580f19580f1f3dfc5dcd4958280f9958280d7d5c4958280c4d8d5958280ddd1d7d9d3958280c7dfc2d4958280c4df958280c3d5d5958280c9dfc5c2958280c0dfc2c4d6dfdcd9df9583f69580f19580f1e4d8d1dedbc3958281" class="gate-link">talk</a> to Angela.</p>
         </div>
       </div>
     </div>
@@ -145,6 +145,11 @@
       width: 100%;
       /* Reserve space for the tallest view (auth: form + hint ≈ 110px). */
       min-height: 110px;
+    }
+    /* In loading state, no form is reserved — collapse min-height so the
+       wordmark + caption sit at true visual center of the viewport. */
+    #gate[data-state="loading"] .gate-views {
+      min-height: 0;
     }
     .gate-view {
       position: absolute;
@@ -713,7 +718,7 @@
       var t0 = Date.now();
       function reveal() {
         var elapsed = Date.now() - t0;
-        var wait = Math.max(0, 1200 - elapsed);
+        var wait = Math.max(0, 2000 - elapsed);
         setTimeout(function () {
           if (GATE_MODE === "password") {
             setGateState("password");
