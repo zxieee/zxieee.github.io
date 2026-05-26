@@ -69,33 +69,9 @@ const SHELF_TABS = {
 };
 
 function ShelfGrid({ items, CardComponent }) {
-  const scrollRef = React.useRef(null);
-
-  React.useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const FADE = 24;
-    const update = () => {
-      // Only fade an edge when there's scrollable content past it.
-      const top = Math.min(1, el.scrollTop / FADE);
-      const remaining = el.scrollHeight - el.clientHeight - el.scrollTop;
-      const bottom = Math.min(1, Math.max(0, remaining) / FADE);
-      el.style.setProperty('--top-fade', top.toFixed(3));
-      el.style.setProperty('--bottom-fade', bottom.toFixed(3));
-    };
-    update();
-    el.addEventListener('scroll', update, { passive: true });
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener('scroll', update);
-      ro.disconnect();
-    };
-  }, [items]);
-
   return (
     <div className="shelf-grid-wrap">
-      <div className="shelf-grid-scroll" ref={scrollRef} style={{ padding: "36px 40px 48px 20px" }}>
+      <div className="shelf-grid-scroll" style={{ padding: "36px 40px 48px 20px" }}>
         {items.map((it, i) => <CardComponent key={i} item={it} />)}
       </div>
     </div>);

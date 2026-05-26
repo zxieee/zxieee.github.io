@@ -35,11 +35,11 @@ const PRINCIPLES = [
 
 
 const BIO_TABS = [
-{ key: 'who', label: 'Who I am' },
-{ key: 'care', label: 'What I care about' },
-{ key: 'books', label: 'Books I read' },
-{ key: 'games', label: 'Games I (binge) played' },
-{ key: 'sketches', label: 'Things I painted' }];
+{ key: 'who', label: 'Who I am', labelShort: 'Me' },
+{ key: 'care', label: 'What I care about', labelShort: 'Values' },
+{ key: 'books', label: 'Books I read', labelShort: 'Books' },
+{ key: 'games', label: 'Games I (binge) played', labelShort: 'Games' },
+{ key: 'sketches', label: 'Things I painted', labelShort: 'Art' }];
 
 
 // Paintings/sketches gallery — real artwork. Mix of watercolor (planets, nature)
@@ -74,7 +74,7 @@ const PAINTINGS = [
 // ----- Tab 01 content -----
 function WhoIAm() {
   return (
-    <div className="bio-pane bio-pane-who" style={{ margin: "0px 0px 0px 40px" }}>
+    <div className="bio-pane bio-pane-who">
       <div className="who-portrait-block">
         <figure className="about-portrait who-portrait">
           <img src="assets/angela-portrait.png" alt="Angela Xie, smiling beneath a pink flowering tree" draggable="false" style={{ width: "246px" }} />
@@ -101,7 +101,7 @@ function WhoIAm() {
 // ----- Tab 02 content -----
 function WhatICareAbout() {
   return (
-    <div className="bio-pane bio-pane-care" style={{ gap: "18px", margin: "0px 60px 0px 40px" }}>
+    <div className="bio-pane bio-pane-care" style={{ gap: "18px" }}>
       <ol className="about-principles" style={{ gap: "16px" }}>
         {PRINCIPLES.map((p, i) =>
         <li key={i}>
@@ -129,41 +129,17 @@ function ShelfPane({ tabKey }) {
 }
 
 // ----- Tab 05: paintings gallery -----
-// CSS columns gives a masonry-style wall that preserves each painting's
-// natural aspect ratio. Same glass-card chrome as the shelf so the section
-// feels like part of the same canvas system.
+// Round-robin distributes paintings into 3 columns, producing a masonry-style
+// wall that preserves each painting's natural aspect ratio. Same glass-card
+// chrome as the shelf so the section feels like part of the same canvas
+// system. No inner scroll — the grid grows to fit and flows as part of the
+// page scroll.
 function PaintingsGallery() {
-  const scrollRef = React.useRef(null);
   const [selected, setSelected] = React.useState(null);
 
-  // Round-robin distribute paintings into N columns so we get a true masonry
-  // layout that scrolls VERTICALLY inside the fixed-height shelf canvas.
-  // CSS columns would have flowed horizontally inside a fixed-height parent;
-  // manual column distribution sidesteps that entirely.
   const COLS = 3;
   const columns = Array.from({ length: COLS }, () => []);
   PAINTINGS.forEach((p, i) => columns[i % COLS].push({ p, i }));
-
-  React.useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const FADE = 24;
-    const update = () => {
-      const top = Math.min(1, el.scrollTop / FADE);
-      const remaining = el.scrollHeight - el.clientHeight - el.scrollTop;
-      const bottom = Math.min(1, Math.max(0, remaining) / FADE);
-      el.style.setProperty('--top-fade', top.toFixed(3));
-      el.style.setProperty('--bottom-fade', bottom.toFixed(3));
-    };
-    update();
-    el.addEventListener('scroll', update, { passive: true });
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener('scroll', update);
-      ro.disconnect();
-    };
-  }, []);
 
   // Lightbox: lock background scroll + close on ESC while open.
   React.useEffect(() => {
@@ -181,7 +157,7 @@ function PaintingsGallery() {
   return (
     <div className="bio-pane bio-pane-shelf">
       <div className="shelf-grid-wrap paintings-wrap">
-        <div className="paintings-scroll" ref={scrollRef}>
+        <div className="paintings-scroll">
           {columns.map((col, ci) =>
           <div key={ci} className="painting-col">
               {col.map(({ p, i }) =>
@@ -217,37 +193,103 @@ function PaintingsGallery() {
 
 }
 
+// Continuous-scroll version of the bio section. No nested scroll containers
+// inside — books, games, and paintings each render at their natural height
+// and flow as part of the page scroll. The left nav rail is position: sticky
+// so it stays visible across all five panes; active tab is computed from
+// which pane currently dominates the viewport (IntersectionObserver +
+// scroll-position fallback).
+//
+// Clicking a tab smooth-scrolls to that pane's top with a small offset so
+// the pane lands a little below the viewport top (visual breathing room).
 function BioSection() {
-  const [active, setActive] = React.useState('who');
+  const tabs = BIO_TABS;
+  const [active, setActive] = React.useState(0);
+  const paneRefs = React.useRef([]);
 
-  let body = null;
-  if (active === 'who') body = <WhoIAm />;else
-  if (active === 'care') body = <WhatICareAbout />;else
-  if (active === 'books') body = <ShelfPane tabKey="books" />;else
-  if (active === 'games') body = <ShelfPane tabKey="games" />;else
-  if (active === 'sketches') body = <PaintingsGallery />;
+  React.useEffect(() => {
+    // Active-pane logic: on every scroll, pick whichever pane's top is
+    // closest to (but not below) ~30% of the viewport from the top. This
+    // is more reliable than IntersectionObserver alone for variable-height
+    // content because it always returns a single winner regardless of how
+    // many panes are intersecting.
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const threshold = window.innerHeight * 0.3;
+      let best = 0;
+      for (let i = 0; i < paneRefs.current.length; i++) {
+        const el = paneRefs.current[i];
+        if (!el) continue;
+        const top = el.getBoundingClientRect().top;
+        if (top <= threshold) best = i;else
+        break;
+      }
+      setActive((prev) => prev === best ? prev : best);
+    };
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  const jumpTo = (i) => {
+    const el = paneRefs.current[i];
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    // No offset — scroll-snap-align: start aligns the pane top with viewport
+    // top, so jumpTo() lands at the exact same position the browser snaps to.
+    window.scrollTo({ top, behavior: 'smooth' });
+  };
+
+  const renderPane = (key) => {
+    if (key === 'who') return <WhoIAm />;
+    if (key === 'care') return <WhatICareAbout />;
+    if (key === 'books') return <ShelfPane tabKey="books" />;
+    if (key === 'games') return <ShelfPane tabKey="games" />;
+    if (key === 'sketches') return <PaintingsGallery />;
+    return null;
+  };
 
   return (
-    <section className="bio-section" id="about" style={{ padding: "120px 0px 100px" }}>
+    <section className="bio-section" id="about">
       <div className="bio-layout">
         <aside className="bio-nav">
           <div className="nav-section">A BIT ABOUT ME</div>
           <div className="bio-nav-tabs">
-            {BIO_TABS.map((t, i) =>
+            {tabs.map((t, i) =>
             <button
               key={t.key}
-              className={`item ${active === t.key ? 'active' : ''}`}
-              onClick={() => setActive(t.key)}>
+              className={`item ${active === i ? 'active' : ''}`}
+              onClick={() => jumpTo(i)}>
+
                 <span className="bar"></span>
                 <span className="num">0{i + 1}</span>
-                <span>{t.label}</span>
+                <span className="bio-tab-label-full">{t.label}</span>
+                <span className="bio-tab-label-short">{t.labelShort}</span>
               </button>
             )}
           </div>
         </aside>
 
-        <div className="bio-content" style={{ padding: "0px 40px 0px 0px" }}>
-          {body}
+        <div className="bio-content">
+          {tabs.map((t, i) =>
+          <div
+            key={t.key}
+            ref={(el) => paneRefs.current[i] = el}
+            className={`bio-pane-slot bio-pane-slot-${t.key}`}>
+
+              {renderPane(t.key)}
+            </div>
+          )}
         </div>
       </div>
     </section>);

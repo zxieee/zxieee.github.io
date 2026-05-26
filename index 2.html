@@ -28,13 +28,8 @@
        GATE OVERLAY: loading state + password protection
        To change the password, edit the PASSWORD constant below.
        Note: client-side gating only — not real security.
-
-       `hidden` here suppresses the very first paint so users on
-       GATE_MODE === "off" never see a flash of the loading state.
-       For non-off modes the boot script removes `hidden` once the
-       session check decides the gate should be visible.
        ============================================================ -->
-  <div id="gate" hidden aria-live="polite" data-state="loading">
+  <div id="gate" aria-live="polite" data-state="loading">
     <!-- Tree-shadow canopy — mirrors the portfolio's TREE_CONFIG in app.jsx:
          version: 'canopy', tint: 'peach', opacity: 0.15, sway: 18, blur: 3,
          leafSize: 85. Layer sizes are 'canopy' defaults pre-scaled ×0.85. -->
@@ -102,7 +97,7 @@
             </div>
             <p class="gate-error" id="gate-error" aria-live="assertive"></p>
           </form>
-          <p class="gate-hint">Or <a href="mailto:xzm1008@gmail.com?subject=Magic%20word%20for%20your%20portfolio&body=Hi%20Angela%2C%0A%0ACould%20I%20get%20the%20magic%20word%20to%20see%20your%20portfolio%3F%0A%0AThanks%21" class="gate-link">talk</a> to Angela.</p>
+          <p class="gate-hint">Or <a href="/cdn-cgi/l/email-protection#621a180f5352525a22050f030b0e4c010d0f5d111700080701165f2f03050b01475052150d1006475052040d104750521b0d1710475052120d1016040d0e0b0d44000d061b5f2a0b475052230c05070e03475021475223475223210d170e064750522b475052050716475052160a074750520f03050b01475052150d1006475052160d4750521107074750521b0d1710475052120d1016040d0e0b0d475124475223475223360a030c0911475053" class="gate-link">talk</a> to Angela.</p>
         </div>
       </div>
     </div>
@@ -570,7 +565,7 @@
     }
   </style>
 
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     (function () {
       // ====== GATE MODE ============================================
       // Controls what appears before the site loads:
@@ -750,12 +745,6 @@
           return;
         }
       } catch (e) {}
-
-      // Gate is `hidden` by default in the markup (suppresses first-paint
-      // flash for GATE_MODE === "off" users). For password/loading modes
-      // we need it visible during the loading dwell — remove the attribute
-      // now that the session check has confirmed we're staying on the gate.
-      gate.removeAttribute("hidden");
 
       // Lock scroll while gate is up.
       document.body.style.overflow = "hidden";

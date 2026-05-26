@@ -66,7 +66,7 @@ function Hero() {
       <a href="#top" className="hero-logo" aria-label="Home">
         <span className="hero-logo-mark" style={{ width: "24px", height: "24px" }}></span>
       </a>
-      <div className="hero-inner">
+      <div className="hero-inner" style={{ margin: "60px 0px 0px" }}>
         <h1 className="hero-name" style={{ fontSize: "40px" }}>Angela Xie</h1>
         <div
           className="hero-rotator"

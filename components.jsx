@@ -244,10 +244,9 @@ function VideoMock({ media }) {
 }
 
 function ProjectMock({ project }) {
-  const { type, accent, company, year, media } = project;
+  const { type, accent, media } = project;
   return (
     <div className="proj-mock">
-      <div className="proj-tag">{company}</div>
       {type === 'phone' && <PhoneMock accent={accent} />}
       {type === 'stack' && <StackMock accent={accent} />}
       {type === 'split' && <SplitMock accent={accent} />}

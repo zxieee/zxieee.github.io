@@ -19,11 +19,25 @@
   --serif: 'Instrument Serif', 'Times New Roman', serif;
   --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ---------- Universal fluid scaling ----------
+     Single source of truth for content width + page gutter across every
+     major section (hero, work, shelf, bio, footer). clamp() lets the layout
+     breathe on wide displays without breaking narrow ones:
+       - container-max: caps content at 1760px on ultrawide; on viewports
+         ≤ ~1521px (where 92vw < 1400), the lower bound returns 1400 and the
+         viewport itself becomes the effective cap — so behavior on existing
+         desktop sizes is unchanged.
+       - gutter: page edge padding scales 32px → 64px so the content doesn't
+         hug the bezel on a 4K display, and the breathing room grows with
+         the canvas. */
+  --container-max: clamp(1400px, 92vw, 1760px);
+  --gutter: clamp(32px, 3vw, 64px);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
 
 body {
   font-family: var(--sans);
@@ -140,16 +154,20 @@ main { position: relative; z-index: 2; }
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 24px 32px 40px 40px;
+  padding: 24px var(--gutter) 40px var(--gutter);
   position: relative;
-  max-width: 1400px;
+  max-width: var(--container-max);
   margin: 0 auto;
 }
-/* Logo mark — anchored to viewport top-left, independent of hero content. */
+/* Logo mark — anchored to the viewport, but on wide displays we slide it
+   inward so it hugs the content's left edge instead of flying off into the
+   far corner of a 4K screen. The max() keeps it at 24px on viewports narrower
+   than --container-max (calc goes ≤ 0), and shifts it right by exactly the
+   empty margin between viewport edge and content edge on anything wider. */
 .hero-logo {
   position: fixed;
   top: 24px;
-  left: 24px;
+  left: max(24px, calc(50% - var(--container-max) / 2 + 24px));
   width: 44px;
   height: 44px;
   display: inline-flex;
@@ -422,9 +440,9 @@ html.font-all-georgia body {
   display: grid;
   grid-template-columns: 30% 70%;
   gap: 0;
-  max-width: 1400px;
+  max-width: var(--container-max);
   margin: 0 auto;
-  padding: 0 32px 0 40px;
+  padding: 0 var(--gutter);
   /* Both columns naturally center; per-column transforms (--nav-shift / --stage-shift,
      set in JS from scroll progress) pull them up to top-aligned during peek and ease
      back to centered as the section docks. */
@@ -511,8 +529,10 @@ html.font-all-georgia body {
 /* Legacy hooks — kept as no-ops */
 .work-canvas {
   position: relative;
-  /* Fixed natural height so the showcase stays the same size in peek + settled. */
-  height: 680px;
+  /* Fluid height — keeps the existing 680px on viewports ≤1790px (where 38vw
+     < 680), grows up to 780px on ultrawide so the showcase isn't dwarfed by
+     the surrounding empty canvas. */
+  height: clamp(680px, 38vw, 780px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -565,7 +585,9 @@ html.font-all-georgia body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 500px;
+  /* Fluid floor so the frame fills more vertical space on wide displays —
+     same 500px on ≤1785px viewports, up to 600px on ultrawide. */
+  min-height: clamp(500px, 28vw, 600px);
 }
 /* Card chrome mode — three states driven by class on <html>:
    • .frame-chrome  → default (glass + drop-shadow, defined above)
@@ -678,7 +700,10 @@ html.font-all-georgia body {
 /* ---------- Project mock content ---------- */
 /* iPhone 12-style phone frame for the Story end card GIF. */
 .gif-mock {
-  width: 232px;
+  /* Fluid width — stays at 232px on viewports ≤1288px (where 18vw ≈ 232),
+     grows up to 320px on ultrawide so the phone reads at the same visual
+     weight against the larger frame. */
+  width: clamp(232px, 18vw, 320px);
   background: var(--gif-bezel, #1A1620);
   border-radius: 48px;
   padding: 8px;
@@ -724,7 +749,9 @@ html.font-all-georgia body {
   height: 100%;
 }
 .gif-mock.duo-item {
-  width: 210px;
+  /* Same fluid-scaling treatment as the solo phone, sized down slightly so
+     the pair still fits comfortably side-by-side at every viewport width. */
+  width: clamp(210px, 16vw, 290px);
   animation: none;
   transform: none;
   border-radius: 38px;
@@ -925,8 +952,8 @@ html.font-all-georgia body {
 
 /* phone frame */
 .phone {
-  width: 240px;
-  height: 480px;
+  width: clamp(240px, 18vw, 320px);
+  aspect-ratio: 1 / 2;
   background: #1A1620;
   border-radius: 38px;
   padding: 8px;
@@ -989,9 +1016,9 @@ html.font-all-georgia body {
   padding: 120px 0 100px;
 }
 .shelf-head {
-  max-width: 1400px;
+  max-width: var(--container-max);
   margin: 0 auto 48px;
-  padding: 0 32px 0 40px;
+  padding: 0 var(--gutter);
 }
 .shelf-head h2 {
   font-family: var(--serif);
@@ -1013,9 +1040,9 @@ html.font-all-georgia body {
   display: grid;
   grid-template-columns: minmax(0, 30%) minmax(0, 70%);
   gap: 0;
-  max-width: 1400px;
+  max-width: var(--container-max);
   margin: 0 auto;
-  padding: 0 32px 0 40px;
+  padding: 0 var(--gutter);
   align-items: start;
 }
 .shelf-nav {
@@ -1105,7 +1132,10 @@ html.font-all-georgia body {
   min-width: 0;
 }
 
-/* Shelf grid — dense vertically scrollable wall of covers */
+/* Shelf grid — dense vertically scrollable wall of covers.
+   The wrap no longer constrains height (was 520px); it grows to fit all
+   covers so the grid flows as part of the page scroll instead of having
+   its own inner scrollbar nested inside the bio section. */
 .shelf-grid-wrap {
   position: relative;
   background: rgba(255, 255, 255, 0.55);
@@ -1119,8 +1149,7 @@ html.font-all-georgia body {
     0 10px 30px -10px rgba(255, 154, 107, 0.15),
     0 1px 0 rgba(255,255,255,0.9) inset;
   padding: 4px;
-  height: 520px;
-  overflow: hidden;
+  overflow: visible;
 }
 /* Card-chrome modes — applies to the outer shelf canvas window the same way
    .frame-* applies to the project-card .work-frame. Book covers themselves
@@ -1140,42 +1169,16 @@ html.font-all-georgia body {
   -webkit-backdrop-filter: none;
 }
 .shelf-grid-scroll {
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  /* Was an inner scroll container (height:100%; overflow-y:auto). Now flows
+     as part of the page scroll — the grid grows to fit every cover so the
+     bio section is one continuous scroll instead of a scrolling box nested
+     inside another scroll. */
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-auto-rows: min-content;
   align-content: start;
   gap: 18px;
-  /* Generous padding so each cover's drop shadow has room to bleed without
-     getting clipped by the scroll container or the wrap's rounded edge.
-     Heavy interior padding keeps the dense 5-col wall from crowding the
-     canvas edges and lets the soft mesh background read through. */
   padding: 40px 64px 52px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(31,26,36,0.18) transparent;
-  /* Soft fade at top + bottom — only visible when there's scrollable content past
-     that edge. --top-fade / --bottom-fade are set by JS (0 when at the edge, 1 when
-     scrolled past the fade distance). */
-  --top-fade: 0;
-  --bottom-fade: 1;
-  -webkit-mask-image: linear-gradient(180deg,
-    rgba(0,0,0,calc(1 - var(--top-fade))) 0,
-    #000 24px,
-    #000 calc(100% - 24px),
-    rgba(0,0,0,calc(1 - var(--bottom-fade))) 100%);
-  mask-image: linear-gradient(180deg,
-    rgba(0,0,0,calc(1 - var(--top-fade))) 0,
-    #000 24px,
-    #000 calc(100% - 24px),
-    rgba(0,0,0,calc(1 - var(--bottom-fade))) 100%);
-}
-.shelf-grid-scroll::-webkit-scrollbar { width: 6px; }
-.shelf-grid-scroll::-webkit-scrollbar-track { background: transparent; }
-.shelf-grid-scroll::-webkit-scrollbar-thumb {
-  background: rgba(31,26,36,0.18);
-  border-radius: 999px;
 }
 
 /* Responsive column count for the shelf grid.
@@ -1422,8 +1425,8 @@ html.font-all-georgia body {
 .footer {
   position: relative;
   z-index: 2;
-  padding: 60px 32px 60px 40px;
-  max-width: 1400px;
+  padding: 60px var(--gutter);
+  max-width: var(--container-max);
   margin: 0 auto;
   border-top: 1px solid var(--line);
 }
@@ -1796,7 +1799,11 @@ html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
   .hero-scroll { left: 32px; }
   .work-sticky { grid-template-columns: 1fr; padding: 0 32px; }
   .work-nav { display: none; }
-  .work-stage-area { padding: 20px 0; }
+  /* Override the inline 40px horizontal padding + the work-canvas inline
+     20px right margin so the project card sits flush with the layout's
+     32px edge (matches the other narrow-mode sections). */
+  .work-stage-area { padding: 20px 0 !important; }
+  .work-canvas { margin: 0 !important; }
   .shelf-section { padding: 80px 0; }
   .shelf-head { padding: 0 32px; }
   .shelf-layout { padding: 0 32px; }
@@ -1826,9 +1833,9 @@ html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
   display: grid;
   grid-template-columns: minmax(0, 30%) minmax(0, 70%);
   gap: 0;
-  max-width: 1400px;
+  max-width: var(--container-max);
   margin: 0 auto;
-  padding: 0 32px 0 40px;
+  padding: 0 var(--gutter);
   align-items: start;
 }
 
@@ -2078,31 +2085,42 @@ html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
    Merged "A bit about me" section — combines old About + Shelf into one
    five-tab IA. Reuses the existing .shelf-grid-wrap / .about-* leaf styles;
    only the outer chrome (layout, nav rail, pane wrapper) is new.
+
+   Continuous-scroll layout: nav rail position: sticky on the left so it
+   pins as the user scrolls through five vertically-stacked panes on the
+   right. No inner scroll containers — shelf grids and the paintings wall
+   render at their natural height and contribute to the page scroll. The
+   active tab is computed in JS from which pane is closest to ~30% from
+   the top of the viewport.
    ============================================================================ */
 .bio-section {
   position: relative;
-  padding: 100px 0 100px;
+  padding: 120px 0 100px;
 }
 .bio-layout {
   display: grid;
   grid-template-columns: minmax(0, 30%) minmax(0, 70%);
   gap: 0;
-  max-width: 1400px;
+  max-width: var(--container-max);
   margin: 0 auto;
-  padding: 0 32px 0 40px;
+  padding: 0 var(--gutter);
   align-items: start;
 }
 
-/* Left rail — same vocabulary as .shelf-nav (numbered items, dot bar). */
+/* Left rail — same vocabulary as .shelf-nav (numbered items, dot bar).
+   Sticky on the left and anchored to the vertical center of the viewport
+   while the user is anywhere in the bio section. top: 50vh pins the rail's
+   top to mid-viewport; translateY(-50%) then shifts it up by half its own
+   height so the rail itself sits centered. */
 .bio-nav {
   padding: 0 8px 0 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  align-self: center;
-  justify-content: center;
   position: sticky;
-  top: 80px;
+  top: 50vh;
+  transform: translateY(-50%);
+  align-self: start;
 }
 .bio-nav .nav-section {
   font-family: var(--mono);
@@ -2129,7 +2147,7 @@ html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
   font-size: 14px;
   color: var(--ink-soft);
   position: relative;
-  border-radius: 6px;
+  border-radius: 999px;
   transition: all 0.25s ease;
   font-weight: 400;
 }
@@ -2160,39 +2178,87 @@ html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
 }
 .bio-nav .item.active .bar { width: 8px; height: 8px; }
 
+/* Two label variants per tab: full label for desktop (bio-tab-label-full),
+   short label for narrow viewports (bio-tab-label-short). Toggled by the
+   @media block below \u2014 only one is visible at a time. */
+.bio-tab-label-full { display: inline; }
+.bio-tab-label-short { display: none; }
+
 /* Right pane wrapper — content gets the same left inset across all tabs so
    the visual content-start line stays put as the user clicks between tabs.
    Min-height keeps the pane from collapsing on the short "What I care about"
    tab; the books tab is ~520px so this matches. */
+/* Right pane wrapper — contains the five vertically-stacked pane slots.
+   No min-height anymore (each pane controls its own intrinsic size). */
 .bio-content {
   min-width: 0;
-  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+/* Each pane slot is a flow-positioned wrapper around a pane component.
+   Every slot is at least one viewport tall so a single pane fills the
+   user's focus when snapped; tall panes (books/games/sketches) grow
+   beyond 100vh to accommodate their grids and the user scrolls freely
+   within them between snap points.
+
+   scroll-snap-align: start makes each pane's top a snap target. Combined
+   with `scroll-snap-type: y proximity` on <html>, the browser pulls the
+   nearest pane to viewport top WHEN the user lands close to one, but
+   doesn't fight them when they're mid-pane exploring tall content. */
+.bio-pane-slot {
+  scroll-margin-top: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .bio-pane {
   padding-left: 0;
+  width: 100%;
 }
 .bio-pane-who {
   /* Two-column layout for the "Who I am" tab: rectangular portrait on the
-     left, all text on the right. Centered both axes within the 520px canvas
-     so the short bio block fills the same visual space as the books grid. */
-  margin: 0 auto;
-  max-width: 760px;
-  min-height: 520px;
+     left, all text on the right. Drops the fixed 520px min-height — the
+     enclosing .bio-pane-slot-who handles vertical real estate now.
+     flex-wrap lets the portrait + text stack vertically on narrow widths
+     so the content never overflows the column horizontally.
+
+     Inner horizontal padding lines up with where the books/games/paintings
+     covers start — the shelf content is inset by 16px (.bio-pane-shelf) +
+     4px (.shelf-grid-wrap padding) + 20px (.shelf-grid-scroll inline left)
+     = 40px from the slot's left edge. We match that here with 40px left,
+     and use 40px right (matching .shelf-grid-scroll's inline right). */
+  margin: 0;
+  max-width: none;
+  padding: 0 40px;
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 32px;
 }
 .bio-pane-care {
-  margin: 0 auto;
-  max-width: 760px;
-  min-height: 520px;
+  /* Same horizontal padding system as .bio-pane-who so all five tabs share
+     the same content-start line. */
+  margin: 0;
+  max-width: none;
+  padding: 0 40px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 18px;
 }
+
+/* Keep text columns at a readable measure even though the pane now fills
+   the full content column. Without these caps, paragraphs would stretch
+   far wider than is comfortable to read on a wide display. */
+.bio-pane-who .who-text { max-width: 480px; }
+.bio-pane-care .about-principles { max-width: 760px; }
 /* Rectangular portrait variant — overrides the round .about-portrait shape
    when it sits inside the "Who I am" pane. Locked to the photo's natural
    5:7 portrait ratio, sized to read alongside ~4 lines of intro copy. */
@@ -2232,7 +2298,7 @@ html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
    glass wrap's left edge sits where the works section's project card does. */
 .bio-pane-shelf { padding-left: 16px; }
 
-/* Narrow viewport — stack columns, horizontal scrolling tabs (mirrors the
+/* Narrow viewport — stack columns, equal-width tab grid (mirrors the
    shelf-nav narrow-viewport treatment). */
 @media (max-width: 860px) {
   .bio-section { padding: 80px 0; }
@@ -2243,41 +2309,88 @@ html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
   }
   .bio-nav {
     position: sticky;
-    top: 0;
+    top: 12px;
     z-index: 5;
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-    padding: 16px 0 12px;
+    padding: 6px 10px;
+    margin: 0;
     justify-content: flex-start;
-    background: transparent;
+    transform: none !important;
+    /* Rounded floating card — no outline; shadows on all sides lift it off
+       the background as a discrete component. Backdrop blur keeps the mesh
+       blobs/page colors readable through it. */
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border-radius: 14px;
+    box-shadow:
+      0 -2px 8px -4px rgba(31, 26, 36, 0.06),
+      0 6px 18px -6px rgba(31, 26, 36, 0.14),
+      0 2px 6px -2px rgba(31, 26, 36, 0.08);
   }
   .bio-nav .nav-section {
     margin: 0;
     padding: 0;
+    /* Header is redundant in narrow mode — the tab strip carries the meaning. */
+    display: none;
   }
   .bio-nav-tabs {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
+    /* Equal-distributed grid: each tab takes exactly 1/5 of the nav width.
+       minmax(0, 1fr) lets columns shrink if needed (otherwise the text would
+       force them wider on narrow viewports). */
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: center;
     gap: 6px;
     width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
   }
-  .bio-nav-tabs::-webkit-scrollbar { display: none; }
   .bio-nav .item {
     flex-shrink: 0;
+    /* Equal-distributed grid columns mean each tab is exactly 1/5 of the
+       row width. min-width 0 + justify/text-align center the label inside. */
+    min-width: 0;
     padding: 8px 12px;
     gap: 8px;
+    justify-content: center;
+    text-align: center;
     white-space: nowrap;
   }
   .bio-nav .item .bar { display: none; }
+  /* Hide the "01"/"02" numbers in narrow mode — the labels are tight and
+     the numbers add noise without earning their space. */
+  .bio-nav .item .num { display: none; }
+  /* Swap to the short label variant on narrow viewports so all five tabs
+     fit comfortably in the pinned nav card. */
+  .bio-tab-label-full { display: none; }
+  .bio-tab-label-short { display: inline; }
   .bio-pane-who,
   .bio-pane-care { padding-left: 0; max-width: none; }
-  .bio-pane-who { flex-direction: column; gap: 18px; }
+  /* Reset desktop max-width caps on the inner text columns so they fill
+     the narrow viewport rather than staying capped at 480/760. */
+  .bio-pane-who .who-text { max-width: none; }
+  .bio-pane-care .about-principles { max-width: none; }
+  .bio-pane-who {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 0;
+    gap: 18px;
+    margin: 0 !important;
+    padding: 8px 0 0;
+  }
+  .bio-pane-care {
+    min-height: 0;
+    justify-content: flex-start;
+    margin: 0 !important;
+    padding: 8px 0 0;
+  }
+  /* Drop the 16px left inset so the shelf grid sits flush within the layout's
+     symmetric 32px padding (matches the Selected Work section's edge). */
+  .bio-pane-shelf { padding-left: 0; }
   .who-portrait { width: 160px; }
+  .who-text { width: 100%; }
 }
 
 
@@ -2288,33 +2401,15 @@ html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
    Each painting keeps its natural aspect ratio.
    ============================================================================ */
 .paintings-scroll {
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 36px 40px 48px;
+  /* Same continuous-scroll treatment as .shelf-grid-scroll — no inner
+     scroll container. The masonry columns grow to fit every painting and
+     flow as part of the page scroll.
+     Padding matches the books/games grid exactly (36/40/48/20) so the
+     three shelves visually align along their left edge. */
+  padding: 36px 40px 48px 20px;
   display: flex;
   gap: 18px;
   align-items: flex-start;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(31,26,36,0.18) transparent;
-  --top-fade: 0;
-  --bottom-fade: 1;
-  -webkit-mask-image: linear-gradient(180deg,
-    rgba(0,0,0,calc(1 - var(--top-fade))) 0,
-    #000 24px,
-    #000 calc(100% - 24px),
-    rgba(0,0,0,calc(1 - var(--bottom-fade))) 100%);
-  mask-image: linear-gradient(180deg,
-    rgba(0,0,0,calc(1 - var(--top-fade))) 0,
-    #000 24px,
-    #000 calc(100% - 24px),
-    rgba(0,0,0,calc(1 - var(--bottom-fade))) 100%);
-}
-.paintings-scroll::-webkit-scrollbar { width: 6px; }
-.paintings-scroll::-webkit-scrollbar-track { background: transparent; }
-.paintings-scroll::-webkit-scrollbar-thumb {
-  background: rgba(31,26,36,0.18);
-  border-radius: 999px;
 }
 .painting-col {
   flex: 1 1 0;
@@ -2324,9 +2419,10 @@ html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
   gap: 18px;
 }
 
-/* Narrow viewport — tighten paddings/gaps; keep 3 columns. */
+/* Narrow viewport — tighten paddings/gaps; keep 3 columns. Left padding
+   stays in sync with the books/games grid narrow-viewport treatment. */
 @media (max-width: 1080px) {
-  .paintings-scroll { padding: 32px 28px 40px; gap: 14px; }
+  .paintings-scroll { padding: 32px 28px 40px 20px; gap: 14px; }
   .painting-col { gap: 14px; }
 }
 
