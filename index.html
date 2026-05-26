@@ -97,7 +97,7 @@
             </div>
             <p class="gate-error" id="gate-error" aria-live="assertive"></p>
           </form>
-          <p class="gate-hint">Or <a href="/cdn-cgi/l/email-protection#b0c8cadd81808088f0d7ddd1d9dc9ed3dfdd8fc3c5d2dad5d3c48dfdd1d7d9d3958280c7dfc2d4958280d6dfc2958280c9dfc5c2958280c0dfc2c4d6dfdcd9df96d2dfd4c98df8d9958280f1ded7d5dcd19582f39580f19580f1f3dfc5dcd4958280f9958280d7d5c4958280c4d8d5958280ddd1d7d9d3958280c7dfc2d4958280c4df958280c3d5d5958280c9dfc5c2958280c0dfc2c4d6dfdcd9df9583f69580f19580f1e4d8d1dedbc3958281" class="gate-link">talk</a> to Angela.</p>
+          <p class="gate-hint">Or <a href="/cdn-cgi/l/email-protection#621a180f5352525a22050f030b0e4c010d0f5d111700080701165f2f03050b01475052150d1006475052040d104750521b0d1710475052120d1016040d0e0b0d44000d061b5f2a0b475052230c05070e03475021475223475223210d170e064750522b475052050716475052160a074750520f03050b01475052150d1006475052160d4750521107074750521b0d1710475052120d1016040d0e0b0d475124475223475223360a030c0911475053" class="gate-link">talk</a> to Angela.</p>
         </div>
       </div>
     </div>
@@ -570,10 +570,13 @@
       // ====== GATE MODE ============================================
       // Controls what appears before the site loads:
       //   'off'      — skip everything, site loads instantly (public)
-      //   'loading'  — show loading animation, then auto-enter site
+      //   'topbar'   — slim progress bar at top of viewport (NProgress style)
+      //   'loading'  — full-screen loading animation with logo
       //   'password' — show loading → require password → enter site
-      var GATE_MODE = "loading";
+      var GATE_MODE = "off";
       var PASSWORD = "potato"; // only used when GATE_MODE === 'password'
+      // Top bar color (used when GATE_MODE === 'topbar')
+      var TOPBAR_COLOR = "#FFB088";
       // =============================================================
 
       var SESSION_KEY = "gate.unlocked.v1";
@@ -584,6 +587,43 @@
         gate.setAttribute("hidden", "");
         gate.classList.add("is-hidden");
         document.body.style.overflow = "";
+        return;
+      }
+
+      // Mode: 'topbar' — hide the full gate, show a slim top progress bar.
+      // Uses an eased fake-progress curve (asymptotic toward 90%) that snaps
+      // to 100% and fades out when window.load fires.
+      if (GATE_MODE === "topbar") {
+        gate.setAttribute("hidden", "");
+        gate.classList.add("is-hidden");
+        document.body.style.overflow = "";
+
+        var bar = document.createElement("div");
+        bar.id = "topbar-loader";
+        bar.style.cssText =
+          "position:fixed;top:0;left:0;height:2px;width:0%;" +
+          "background:" + TOPBAR_COLOR + ";z-index:9999;pointer-events:none;" +
+          "transition:width 0.3s ease;will-change:width,opacity;";
+        document.body.appendChild(bar);
+
+        // Fake-progress: ease toward 90% so the bar always feels alive
+        // even on fast connections. window.load triggers the final snap.
+        var p = 0;
+        var tick = setInterval(function () {
+          p += (90 - p) * 0.08;
+          bar.style.width = p + "%";
+        }, 150);
+
+        function finishTopbar() {
+          clearInterval(tick);
+          bar.style.transition = "width 0.25s ease, opacity 0.4s ease 0.2s";
+          bar.style.width = "100%";
+          bar.style.opacity = "0";
+          setTimeout(function () { if (bar.parentNode) bar.remove(); }, 800);
+        }
+        if (document.readyState === "complete") finishTopbar();
+        else window.addEventListener("load", finishTopbar, { once: true });
+
         return;
       }
 
