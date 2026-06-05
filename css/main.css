@@ -1618,6 +1618,13 @@ html.font-all-georgia body {
   max-width: var(--container-max);
   margin: 0 auto;
   border-top: 1px solid var(--line);
+  /* Give the page bottom its own snap point. Without this, the nearest snap
+     target near the end of the page is the LAST bio pane's top (scroll-snap-
+     align: start), so `scroll-snap-type: y proximity` on <html> yanks the
+     viewport back up and hides the footer when you scroll to the bottom.
+     Aligning the footer's end to the viewport's end makes the very bottom a
+     valid resting place, so it no longer bounces away. */
+  scroll-snap-align: end;
 }
 .footer-row {
   display: flex;

@@ -19,20 +19,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=116">
+  <link rel="stylesheet" href="css/main.css?v=117">
 </head>
 <body>
   <div id="root"></div>
 
   <!-- ============================================================
-       GATE OVERLAY: loading state + password protection
-       To change the password, edit the PASSWORD constant below.
+       GATE OVERLAY — password / "magic word" lock screen (LEGACY).
+
+       DISABLED by default and kept intact for future reuse. It is
+       gated entirely behind the GATE_ENABLED feature flag in the boot
+       <script> below. While that flag is false this overlay never
+       renders (it stays `hidden` and the boot script returns early).
+
+       To re-enable: set `var GATE_ENABLED = true;` in the boot script.
+       To change the password: edit the PASSWORD constant there.
        Note: client-side gating only — not real security.
 
-       `hidden` here suppresses the very first paint so users on
-       GATE_MODE === "off" never see a flash of the loading state.
-       For non-off modes the boot script removes `hidden` once the
-       session check decides the gate should be visible.
+       `hidden` here suppresses the very first paint so the overlay
+       never flashes while the flag is off. When enabled, the boot
+       script removes `hidden` once the session check decides the gate
+       should be visible.
        ============================================================ -->
   <div id="gate" hidden aria-live="polite" data-state="loading">
     <!-- Tree-shadow canopy — mirrors the portfolio's TREE_CONFIG in app.jsx:
@@ -572,22 +579,49 @@
 
   <script>
     (function () {
-      // ====== GATE MODE ============================================
-      // Controls what appears before the site loads:
-      //   'off'      — skip everything, site loads instantly (public)
+      // ====== FEATURE FLAG: password / lock screen ================
+      // Master switch for the ENTIRE lock experience (full-screen
+      // loading animation, the "magic word" password prompt, and the
+      // "loading goodness…" / mailto fallback). DISABLED by default.
+      //
+      // While GATE_ENABLED is false, the guard just below hides the
+      // #gate overlay and returns immediately — so there is NO code
+      // path that can render the lock screen, the password prompt, or
+      // the fallback. The site goes straight to the real content.
+      //
+      // >>> To turn the lock back ON later, flip this ONE line to true:
+      //
+      //         var GATE_ENABLED = true;
+      //
+      // All the lock logic below stays intact, just unreferenced.
+      var GATE_ENABLED = false;
+      // ============================================================
+
+      var gate = document.getElementById("gate");
+
+      // Flag OFF → never render the lock; load the real site instantly.
+      if (!GATE_ENABLED) {
+        gate.setAttribute("hidden", "");
+        gate.classList.add("is-hidden");
+        document.body.style.overflow = "";
+        return;
+      }
+
+      // ----- Everything below ONLY runs when GATE_ENABLED === true -----
+      // GATE_MODE picks which lock style to show once enabled:
       //   'topbar'   — slim progress bar at top of viewport (NProgress style)
       //   'loading'  — full-screen loading animation with logo
       //   'password' — show loading → require password → enter site
-      var GATE_MODE = "off";
+      //   'off'      — (legacy) also skips everything
+      var GATE_MODE = "password";
       var PASSWORD = "potato"; // only used when GATE_MODE === 'password'
       // Top bar color (used when GATE_MODE === 'topbar')
       var TOPBAR_COLOR = "#FFB088";
       // =============================================================
 
       var SESSION_KEY = "gate.unlocked.v1";
-      var gate = document.getElementById("gate");
 
-      // Mode: 'off' — hide gate immediately, skip the rest.
+      // Mode: 'off' — hide gate immediately, skip the rest. (legacy)
       if (GATE_MODE === "off") {
         gate.setAttribute("hidden", "");
         gate.classList.add("is-hidden");
