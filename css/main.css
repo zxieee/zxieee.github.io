@@ -1,0 +1,2851 @@
+:root {
+  --bg: #FBF8F5;
+  --ink: #1F1A24;
+  --ink-soft: #5A5260;
+  --ink-mute: #8B8290;
+  --line: rgba(31, 26, 36, 0.08);
+  --line-soft: rgba(31, 26, 36, 0.04);
+
+  --pink: #FFC2D4;
+  --peach: #FFD4B8;
+  --orange: #FFB088;
+  --lilac: #D8C4F5;
+  --purple: #B8A4E8;
+  --rose: #F5B8C8;
+
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-strong: rgba(255, 255, 255, 0.72);
+
+  --serif: 'Instrument Serif', 'Times New Roman', serif;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ---------- Universal fluid scaling ----------
+     Single source of truth for content width + page gutter across every
+     major section (hero, work, shelf, bio, footer). clamp() lets the layout
+     breathe on wide displays without breaking narrow ones:
+       - container-max: caps content at 1760px on ultrawide; on viewports
+         ≤ ~1521px (where 92vw < 1400), the lower bound returns 1400 and the
+         viewport itself becomes the effective cap — so behavior on existing
+         desktop sizes is unchanged.
+       - gutter: page edge padding scales 32px → 64px so the content doesn't
+         hug the bezel on a 4K display, and the breathing room grows with
+         the canvas. */
+  --container-max: clamp(1400px, 92vw, 1760px);
+  --gutter: clamp(32px, 3vw, 64px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+a { color: inherit; text-decoration: none; }
+
+/* Honor user motion preferences — kill scroll-snap, marquee, and any transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  html { scroll-behavior: auto; }
+}
+
+.serif { font-family: var(--serif); font-weight: 400; letter-spacing: -0.01em; }
+.mono { font-family: var(--mono); }
+
+/* ---------- Gradient Mesh Background ---------- */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--bg);
+}
+.mesh-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+}
+.mesh-blob.b1 { width: 60vw; height: 60vw; background: var(--pink); top: -20vw; left: -10vw; }
+.mesh-blob.b2 { width: 55vw; height: 55vw; background: var(--orange); top: 10vh; right: -15vw; opacity: 0.45; }
+.mesh-blob.b3 { width: 50vw; height: 50vw; background: var(--purple); top: 60vh; left: 20vw; opacity: 0.35; }
+.mesh-blob.b4 { width: 45vw; height: 45vw; background: var(--lilac); bottom: -10vw; right: 5vw; opacity: 0.5; }
+.mesh-blob.b5 { width: 40vw; height: 40vw; background: var(--peach); bottom: 30vh; left: -10vw; opacity: 0.4; }
+
+/* grain */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.1 0 0 0 0 0.1 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+main { position: relative; z-index: 2; }
+
+/* ---------- Nav ---------- */
+.topnav {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: var(--glass-strong);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 999px;
+  box-shadow: 0 4px 24px rgba(180, 140, 200, 0.12), 0 1px 0 rgba(255,255,255,0.8) inset;
+}
+.topnav .brand {
+  font-family: var(--serif);
+  font-size: 18px;
+  padding: 6px 14px 6px 18px;
+  letter-spacing: -0.01em;
+}
+.topnav .brand em { font-style: italic; opacity: 0.6; font-size: 14px; margin-left: 2px; }
+.topnav a.link {
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  transition: all 0.2s ease;
+}
+.topnav a.link:hover { background: rgba(255,255,255,0.6); color: var(--ink); }
+.topnav .cta {
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.topnav .cta:hover { transform: translateY(-1px); }
+
+/* ---------- Hero ---------- */
+.hero {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px var(--gutter) 40px var(--gutter);
+  position: relative;
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+/* Logo mark — anchored to the viewport, but on wide displays we slide it
+   inward so it hugs the content's left edge instead of flying off into the
+   far corner of a 4K screen. The max() keeps it at 24px on viewports narrower
+   than --container-max (calc goes ≤ 0), and shifts it right by exactly the
+   empty margin between viewport edge and content edge on anything wider. */
+.hero-logo {
+  position: fixed;
+  top: 24px;
+  left: max(24px, calc(50% - var(--container-max) / 2 + 24px));
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  z-index: 50;
+}
+.hero-logo-mark {
+  width: 40px;
+  height: 40px;
+  display: block;
+  position: relative;
+  background-image: url('../assets/logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.hero-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  z-index: 1;
+}
+/* ===== Tree shadow ===== Real tree-shadow photographs traced into PNGs with
+   warm peach/pink gradient pre-baked into the alpha channel. Lives at the top
+   of <main> spanning past the hero into the work section; a vertical mask
+   gradient fades the shadow density from dense at the top of the page to
+   gone further down, so it reads like sun-through-leaves cast on the upper
+   wall that lightens toward the floor. */
+.tree-shadow {
+  position: absolute;
+  /* Bleed the clip box ~16px beyond the top and sides of the page. The element
+     has filter: blur(...) + overflow: hidden, so its hard clip edges get
+     softened by the blur — which left a faint lighter/cooler seam (it read as
+     a "mint" hairline against the warm shadow) along the very top edge on tall
+     displays. Lifting the clip edges off-screen moves that blurred seam out of
+     view; the mask + artwork only shift by ~16px, which is imperceptible. */
+  top: -16px;
+  left: -16px;
+  right: -16px;
+  /* Extend ~1.3 viewport heights so the fade carries through the hero into
+     the start of the work section. The mask-image below handles the actual
+     density falloff. (+16px makes up for the -16px top offset.) */
+  height: calc(130vh + 16px);
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: var(--tree-opacity, 0.65);
+  /* Optional extra blur from the Tweaks slider — 0 by default. */
+  filter: blur(var(--tree-blur, 0px));
+  /* Multiply: the PNG's warm tints compound with the off-white background
+     beneath — exactly how a real cast shadow darkens a wall. */
+  mix-blend-mode: multiply;
+  /* Vertical fade only. The mask reaches full transparency by ~70% of the
+     130vh container so the bottom of the canopy PNG (where leaf content
+     ends) is hidden well under zero alpha — no visible cut-off edge. */
+  -webkit-mask-image: linear-gradient(180deg,
+    rgba(0,0,0,1)    0%,
+    rgba(0,0,0,1)    12%,
+    rgba(0,0,0,0.85) 25%,
+    rgba(0,0,0,0.55) 40%,
+    rgba(0,0,0,0.25) 55%,
+    rgba(0,0,0,0.08) 65%,
+    rgba(0,0,0,0)    72%);
+  mask-image: linear-gradient(180deg,
+    rgba(0,0,0,1)    0%,
+    rgba(0,0,0,1)    12%,
+    rgba(0,0,0,0.85) 25%,
+    rgba(0,0,0,0.55) 40%,
+    rgba(0,0,0,0.25) 55%,
+    rgba(0,0,0,0.08) 65%,
+    rgba(0,0,0,0)    72%);
+}
+.ts-leaf-layer {
+  /* Negative inset gives each layer a 15% overhang in every direction beyond
+     the .tree-shadow wrap. The wrap clips with overflow:hidden, but the
+     overhang ensures the layer's content still covers every wrap pixel even
+     after the sway animation's rotate/translate transforms swing the layer's
+     bounds around. Without this, rotation exposes the wrap's corners. */
+  will-change: transform;
+  position: absolute;
+  inset: -15%;
+}
+.ts-leaf-back {
+  /* Pivot from center so rotations don't make the far edges swing twice as
+     far as they would with a corner pivot. Combined with generous size
+     overflow per-version, the leaf canvas should never expose its edges. */
+  transform-origin: 50% 50%;
+  animation: ts-back-sway var(--tree-sway, 12s) ease-in-out infinite alternate;
+}
+.ts-leaf-front {
+  transform-origin: 50% 50%;
+  animation: ts-front-sway calc(var(--tree-sway, 12s) * 0.72) ease-in-out infinite alternate;
+}
+
+/* Multi-keyframe sway for organic, irregular rhythm. */
+@keyframes ts-back-sway {
+  0%   { transform: rotate(-2.0deg) translate(-18px, -4px) scale(1.04); }
+  28%  { transform: rotate(0.8deg)  translate(6px, 6px)    scale(1.05); }
+  55%  { transform: rotate(-0.4deg) translate(14px, -8px)  scale(1.03); }
+  78%  { transform: rotate(2.2deg)  translate(-4px, 10px)  scale(1.06); }
+  100% { transform: rotate(-1.4deg) translate(16px, 4px)   scale(1.04); }
+}
+@keyframes ts-front-sway {
+  0%   { transform: rotate(1.6deg)  translate(10px, -4px)  scale(1.02); }
+  30%  { transform: rotate(-1.2deg) translate(-12px, 6px)  scale(1.03); }
+  60%  { transform: rotate(0.4deg)  translate(8px, 10px)   scale(1.01); }
+  100% { transform: rotate(-2.4deg) translate(-14px, -2px) scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ts-leaf-back, .ts-leaf-front { animation: none; }
+}
+
+.hero h1, .hero .hero-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 32px;
+  /* Need ≥1.15 to give serif descenders ("g" in Angela) and gradient text room
+     to render fully without clipping at the top/bottom edges. */
+  line-height: 1.2;
+  letter-spacing: 0;
+  font-weight: 600;
+  margin: 0;
+  /* A hair of vertical padding so the gradient-clipped glyphs aren't shaved
+     by any ancestor overflow rules. */
+  padding: 2px 0;
+  background: linear-gradient(105deg, #2A2530 0%, #2A2530 28%, #B85C8E 58%, #FF8A9B 78%, #C896F0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  width: max-content;
+  max-width: 100%;
+  /* Keep the headline above the tree-shadow layer. */
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== Light mode ===== Toggle from Tweaks → "White background (Dawn wordmark)".
+   Strips the page back to pure white and re-skins the wordmark with Dawn-palette
+   gradient stops so the brand color still leads the eye. */
+html.light-mode {
+  --bg: #FFFFFF;
+}
+html.light-mode body { background: #FFFFFF; }
+html.light-mode .mesh-bg { display: none; }
+html.light-mode .hero h1,
+html.light-mode .hero .hero-name {
+  /* Dawn palette: peach → pink → orange → lilac → purple. Dark anchor kept on
+     "Angela" so the name reads first against the white field. */
+  background: linear-gradient(105deg,
+    #2A2530 0%,
+    #2A2530 28%,
+    #FF9F70 52%,
+    #FFB4B4 70%,
+    #E8C8F0 86%,
+    #C8A8E0 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+/* Rotator window — fits up to 2 wrapped lines. Hides the staged "next" tagline
+   sitting just below until the track lifts. */
+.hero-rotator {
+  position: relative;
+  height: 50px; /* 2 × (18px * 1.4 line-height) */
+  max-width: 760px;
+  overflow: hidden;
+}
+.hero-rotator-track {
+  display: flex;
+  flex-direction: column;
+  /* Apple-style expressive easing — feels assured, not bouncy. */
+  transition: transform 850ms cubic-bezier(0.32, 0.72, 0, 1);
+  transform: translateY(0);
+  will-change: transform;
+}
+.hero-rotator-track.lifted {
+  /* Lift by exactly one slot. Using -100% of the track's first child would be
+     ideal but track height = 2 lines, so -50% gets us one line precisely. */
+  transform: translateY(-50%);
+}
+/* Instant reset to slot 0 after the lift completes — no visible reverse. */
+.hero-rotator-track.snap {
+  transition: none;
+  transform: translateY(0);
+}
+.hero-tagline {
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+  margin: 0;
+  max-width: 760px;
+  /* Each slot is 50px tall — lines may wrap up to 2 lines. */
+  height: 50px;
+  display: flex;
+  align-items: flex-start;
+  /* Default fallback gradient — overridden per-line via inline backgroundImage
+     so each rotating tagline arrives with its own pink/orange personality. */
+  background: linear-gradient(95deg, #B8456E 0%, #E06B5A 40%, #F08A4A 72%, #F5B85A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* Inner text wrapper: a single flex item so the line wraps as normal inline
+   text (splitting into raw parts would make each fragment its own flex item). */
+.hero-tagline-text { display: inline; }
+/* Emoji must opt out of the gradient text-clip, otherwise the transparent fill
+   clips the glyph away. Restore a normal fill + remove the clipped background. */
+.hero-tagline-emoji {
+  -webkit-text-fill-color: initial;
+  color: initial;
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-rotator-track { transition: none; }
+}
+
+/* ===== Font modes ===== Toggle from Tweaks → Typography. Overrides the --serif
+   and --sans variables, plus any element that hardcodes Georgia/Inter directly. */
+html.font-georgia-serif {
+  --serif: Georgia, 'Times New Roman', serif;
+}
+html.font-all-georgia {
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans: Georgia, 'Times New Roman', serif;
+}
+/* When in all-georgia mode, body text gets a touch more line-height to read
+   well — Georgia at body sizes is denser than Inter. */
+html.font-all-georgia body {
+  line-height: 1.6;
+}
+
+/* ---------- Marquee ---------- */
+.marquee {
+  position: relative;
+  z-index: 2;
+  padding: 32px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+  background: rgba(255,255,255,0.3);
+  backdrop-filter: blur(10px);
+}
+.marquee-track {
+  display: flex;
+  gap: 60px;
+  white-space: nowrap;
+  animation: scroll 40s linear infinite;
+  width: max-content;
+}
+.marquee-item {
+  font-family: var(--serif);
+  font-size: 32px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 60px;
+}
+.marquee-item::after {
+  content: '✻';
+  font-size: 18px;
+  color: var(--orange);
+}
+@keyframes scroll {
+  to { transform: translateX(-50%); }
+}
+
+/* ---------- Work Section ---------- */
+.work-section {
+  position: relative;
+  background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.4) 30%, rgba(255,255,255,0.4) 70%, transparent 100%);
+}
+
+.work-stage {
+  position: relative;
+  /* total scroll height = #projects * viewport */
+}
+.work-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 36% 64%;
+  gap: 0;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  /* Both columns naturally center; per-column transforms (--nav-shift / --stage-shift,
+     set in JS from scroll progress) pull them up to top-aligned during peek and ease
+     back to centered as the section docks. */
+  align-items: center;
+}
+
+.work-nav {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 8px;
+  height: auto;
+  justify-content: flex-start;
+  transform: translateY(var(--nav-shift, 0px));
+}
+
+/* Rail lives inside .work-sticky as the first grid column; no fixed positioning. */
+/* Vertical centering is interpolated continuously via --nav-shift / --stage-shift,
+   so the rail glides smoothly from top-aligned (peeking) to centered (docked). */
+.work-nav .nav-section {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 12px;
+  padding: 0 8px;
+}
+
+.work-nav .item {
+  text-align: left;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  color: var(--ink-soft);
+  font-size: 14px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  font-weight: 400;
+  background: transparent;
+}
+.work-nav .item:hover { color: var(--ink); }
+.work-nav .item .num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-mute);
+  min-width: 16px;
+}
+.work-nav .item.active {
+  color: var(--ink);
+  font-weight: 500;
+  background: linear-gradient(90deg, rgba(255,194,212,0.25) 0%, rgba(216,196,245,0.15) 100%);
+}
+.work-nav .item.active .num { color: var(--ink); }
+.work-nav .item .bar {
+  display: block;
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF9A6B 0%, #C896F0 100%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+.work-nav .item.active .bar { width: 8px; height: 8px; }
+
+.work-stage-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 0 0 0 16px;
+  position: relative;
+  /* Allow card drop shadows to bleed outside the column without clipping. */
+  overflow: visible;
+  transform: translateY(var(--stage-shift, 0px));
+}
+/* Legacy hooks — kept as no-ops */
+/* Padded clip wrapper: replaces the old clip-path on .work-canvas. The equal
+   padding / negative margin pair keeps layout identical while giving the
+   active card's drop shadow room to bleed (24px top, 120px sides/bottom)
+   before overflow:hidden clips it — same region the clip-path defined.
+   overflow:hidden composites cleanly under the scroll-driven --stage-shift
+   transform on .work-stage-area, so there's no trailing white repaint band
+   at the top edge as the section peeks in/out of the viewport. */
+.work-clip {
+  position: relative;
+  margin: -24px -120px -120px -120px;
+  padding: 24px 120px 120px 120px;
+  overflow: hidden;
+}
+.work-canvas {
+  position: relative;
+  /* Viewport-driven height: the showcase fills (almost) the full pinned
+     viewport so the media can be as large as possible, capped on ultrawide.
+     The 84px reserve leaves a small breathing margin top+bottom inside the
+     100vh sticky. The card inside then splits this height between the media
+     (grows) and the text (natural height, pinned to the bottom) — see
+     .work-card / .work-frame / .work-blurb below. */
+  height: clamp(480px, calc(100vh - 52px), 1060px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  /* The card inside is NOT stretched to this height — it shrink-wraps the
+     prototype + text into one block (see .work-card / .work-frame) and centers
+     it here, so the group floats with equal margin top & bottom. */
+  /* Set by JS in <work-sticky>: continuous progress (0 .. N-1) */
+}
+.work-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  /* Center the [prototype + text] group as one block within the full-height
+     card, instead of letting the frame grow and push text to the bottom. This
+     keeps the visual and its description anchored together in one container. */
+  justify-content: center;
+  pointer-events: none;
+  /* Dynamic gap between the media frame and the text block. Scales with the
+     viewport (vh) and is ALWAYS > 0, so the media can never overlap or crowd
+     the text. This is the single source of truth for the showcase spacing. */
+  gap: 20px;
+  /* Solo swaying phone needs more bottom clearance: the gifSway rotation tilts
+     the phone so its corner dips below the frame, making a 20px gap read too
+     tight. :has() targets ONLY the solo .gif-mock (the duo phones are nested in
+     .duo-mock and don't sway), giving just that card a 32px gap. */
+  /* Distance from active position, in card-slots. */
+  --d: calc(var(--card-i) - var(--work-progress, 0));
+  /* Vertical offset: each neighbor sits a bit more than one card height away.
+     Using 110% so there's a small breathing gap between peeking neighbors. */
+  --y: calc(var(--d) * 110%);
+  /* Scale: 1 at center, 0.8 once one full slot away (clamped). */
+  --abs-d: max(var(--d), calc(-1 * var(--d)));
+  --scale: max(0.8, calc(1 - 0.2 * min(var(--abs-d), 1)));
+  /* Opacity: 1 at center, fading toward edges. */
+  --opa: max(0.25, calc(1 - 0.6 * min(var(--abs-d), 1)));
+  transform: translateY(var(--y)) scale(var(--scale));
+  transform-origin: 50% 50%;
+  opacity: var(--opa);
+  /* Each card on its own GPU layer — prevents the parent clip-path layer from
+     repainting an opaque (white) band as cards translate during scroll. */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: none; /* progress is driven continuously by scroll */
+}
+.work-card.active {
+  pointer-events: auto;
+}
+/* Solo swaying phone (type 'gif') gets a wider gap so its tilted corner clears
+   the text below. Duo phones are nested in .duo-mock, so this won't match them. */
+.work-card:has(.proj-mock > .gif-mock) {
+  gap: 32px;
+}
+
+.work-frame {
+  /* Was: flex: 1; min-height: clamp(500px, 28vw, 600px); + inline height: 500px.
+     The inline height + flex:1 combo rendered inconsistently across browsers —
+     Safari honored the height, Chromium grew it via flex. Now: explicit height
+     via clamp, no flex grow/shrink. Always tall enough to fit the gif-mock
+     phone with comfortable breathing room above and below. */
+  /* Fills ALL remaining vertical space above the text block. flex:1 + min-height:0
+     lets it grow on tall viewports and shrink on short ones without ever pushing
+     the text out of view. The media inside is height-driven (see mock rules),
+     so it tracks this height — as large as possible, never cropping the text. */
+  /* Shrink-wrap the prototype: the frame is sized by the media inside (which is
+     itself capped in vh, see mock rules), NOT by the column height. This keeps
+     the gap to the text below tight and consistent across every project type,
+     and lets the whole group center as one anchored block. */
+  flex: 0 0 auto;
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%);
+  border: 1px solid rgba(255,255,255,0.8);
+  box-shadow:
+    0 -2px 12px -4px rgba(80, 50, 90, 0.18),
+    0 30px 80px -20px rgba(180, 130, 200, 0.25),
+    0 10px 30px -10px rgba(255, 154, 107, 0.15),
+    0 1px 0 rgba(255,255,255,0.9) inset;
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Card chrome mode — three states driven by class on <html>:
+   • .frame-chrome  → default (glass + drop-shadow, defined above)
+   • .frame-outline → 1px hairline outline, no shadow, no fill
+   • .frame-bare    → fully transparent
+   Both outline + bare lift overflow:hidden so device-frame shadows can spill. */
+.frame-outline .work-frame {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, var(--frame-outline-alpha, 0.16));
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: visible;
+}
+.frame-outline .shelf-grid-wrap {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, var(--frame-outline-alpha, 0.16));
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.frame-bare .work-frame {
+  background: transparent;
+  border: 1px solid transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: visible;
+}
+/* Sunset outline — gradient border via mask trick on a ::before pseudo.
+   Plain `background: gradient border-box` would leak into the inside since the
+   default `background-clip: border-box` paints the full element. Instead, we
+   paint a gradient-filled overlay pseudo and mask out its inside via the
+   classic "padded mask + exclude composite" technique, leaving only the
+   1px-thick ring visible. */
+.frame-outline.outline-sunset .work-frame,
+.frame-outline.outline-sunset .shelf-grid-wrap {
+  border: none;
+  position: relative;
+}
+.frame-outline.outline-sunset .work-frame::before,
+.frame-outline.outline-sunset .shelf-grid-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, #FFB464 0%, #FF7896 55%, #6E3790 100%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: var(--frame-outline-alpha-sunset, 1);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.work-blurb {
+  /* Pinned to the bottom of the card at its NATURAL height — flex:0 0 auto means
+     it's never compressed or clipped; the frame above absorbs all size changes.
+     Spacing above is owned by the card's `gap`, not a margin here. */
+  flex: 0 0 auto;
+  display: block;
+}
+.work-blurb .num-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 0.1em;
+  padding-top: 4px;
+}
+.work-blurb h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 32px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  max-width: none;
+}
+.work-blurb p {
+  font-size: 15px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  max-width: none;
+}
+.work-blurb .meta-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.work-blurb .tag {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+}
+.work-blurb .case-link {
+  font-size: 12px;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 4px;
+  white-space: nowrap;
+}
+.work-blurb .case-link:hover { gap: 10px; }
+
+/* ---------- Project mock content ---------- */
+/* iPhone 12-style phone frame for the Story end card GIF. */
+.gif-mock {
+  /* Height-driven: the phone fills the available vertical space (the work-frame
+     height) and derives its width from the screen's aspect-ratio, so it's as
+     large as possible without ever overrunning the frame into the text below.
+     Capped with a vh-aware max so it doesn't get oversized on tall/ultrawide
+     displays. (Was width-clamped, which ignored available height and crowded
+     the text on short viewports.) */
+  /* Prototype height is a fraction of the viewport (scalable: same proportion on
+     a laptop and a 4K display), capped on ultrawide. width derives from the
+     phone's aspect-ratio. */
+  height: clamp(360px, 66vh, 720px);
+  width: auto;
+  background: var(--gif-bezel, #1A1620);
+  border-radius: 48px;
+  padding: 8px;
+  position: relative;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 -2px 4px rgba(0,0,0,0.4),
+    0 40px 80px -20px rgba(60, 40, 80, 0.35),
+    0 10px 20px -8px rgba(255, 154, 107, 0.22);
+  animation: gifSway 9s ease-in-out infinite alternate;
+  transform-style: preserve-3d;
+  transition: background 0.4s ease;
+}
+@keyframes gifSway {
+  0%   { transform: perspective(1200px) rotateY(-20deg) rotate(var(--gif-rotate-z, 25deg)); }
+  100% { transform: perspective(1200px) rotateY(20deg)  rotate(var(--gif-rotate-z, 25deg)); }
+}
+.gif-mock .gif-screen {
+  /* Height-driven so the whole phone scales by available height; width derives
+     from the aspect-ratio, which in turn sizes the (shrink-to-fit flex) bezel. */
+  height: 100%;
+  width: auto;
+  aspect-ratio: 500 / 1089;
+  border-radius: 40px;
+  overflow: hidden;
+  background: #fff;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4);
+}
+.gif-mock .gif-screen img,
+.gif-mock .gif-screen video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Side-by-side phone pair (project 02). Slight vertical stagger for visual rhythm,
+   no rotation / no sway — these are meant to read as a stable pair. */
+.duo-mock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 31px;
+  width: 100%;
+  height: clamp(320px, 58vh, 660px);
+}
+.gif-mock.duo-item {
+  /* Height-driven like the solo phone, but capped a touch smaller so the pair
+     fits side-by-side with the stagger at every viewport width.
+     height is calc(100% - 36px) (not 100%): the ±12px vertical stagger below
+     would otherwise push the lower phone's bottom edge past the frame. Leaving
+     18px of slack on each side absorbs the 12px shift with margin to spare. */
+  height: calc(100% - 36px);
+  width: auto;
+  animation: none;
+  transform: none;
+  border-radius: 38px;
+  padding: 7px;
+}
+.gif-mock.duo-item:hover { transform: none; }
+.gif-mock.duo-item .gif-screen { border-radius: 32px; }
+.gif-mock.duo-item .gif-notch { width: 70px; height: 20px; top: 12px; border-radius: 12px; }
+.gif-mock.duo-item-a { transform: translateY(-12px); }
+.gif-mock.duo-item-a:hover { transform: translateY(-12px); }
+.gif-mock.duo-item-b { transform: translateY(12px); }
+.gif-mock.duo-item-b:hover { transform: translateY(12px); }
+/* Buttons styled on .gif-mock::before / ::after — keep them for visual fidelity. */
+.gif-mock .gif-notch {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 86px;
+  height: 24px;
+  background: #000;
+  border-radius: 14px;
+  z-index: 10;
+}
+
+/* Flat diagram / illustration — transparent PNG floats directly on the canvas
+   without any device chrome (used for project 04 personalization graph). */
+.diagram-mock {
+  /* Bounded by BOTH the frame width and height; object-fit:contain on the image
+     scales it as large as possible while preserving aspect and never overflowing
+     into the text. Caps keep it from getting oversized on big displays. */
+  width: 100%;
+  height: clamp(280px, 56vh, 620px);
+  max-width: min(94%, 980px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 24px 40px rgba(60, 40, 80, 0.18)) drop-shadow(0 6px 14px rgba(120, 80, 140, 0.12));
+}
+.diagram-mock img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* ---------- Spread phone grid (project 07 — GenAI Ad Creatives) ---------- */
+/* Phones laid out flat across three vertically-staggered columns; the whole
+   grid is rotated so it reads as a dynamic, tilted gallery that bleeds past the
+   card edges. Videos play on hover only; the hovered phone pops forward and
+   straightens upright. Rotation / size are tunable via the custom props. */
+/* ============ Project 07 — GenAI Ad Creatives ============ */
+/* Shared phone shell (all layouts). Corner radius is PERCENTAGE-based against
+   the fixed 500/1089 aspect, so it reads as a real iPhone display at any size
+   (~12% of width ≈ a modern iPhone screen radius). The recordings already carry
+   the iOS status bar + dynamic island, so there is NO drawn notch. */
+.creative-phone {
+  background: #1A1620;
+  border-radius: 16.5% / 7.6%;
+  /* Bezel thickness. NB: a percentage padding resolves against the PARENT width,
+     not the phone, so it ballooned the bezel — use a small viewport-scaled px so
+     the bezel stays thin and matches the other device frames (~2% of phone). */
+  padding: clamp(3px, 0.4vw, 6px);
+  box-sizing: border-box;
+  position: relative;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 -2px 4px rgba(0,0,0,0.4),
+    0 22px 44px -16px rgba(60, 40, 80, 0.42),
+    0 6px 14px -6px rgba(80, 50, 90, 0.3);
+  transition: transform 0.45s cubic-bezier(0.22, 0.8, 0.24, 1),
+              box-shadow 0.45s ease, filter 0.45s ease;
+  cursor: pointer;
+  will-change: transform;
+}
+.creative-phone:hover {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.1),
+    inset 0 -2px 4px rgba(0,0,0,0.4),
+    0 44px 80px -18px rgba(60, 40, 80, 0.55),
+    0 16px 32px -10px rgba(120, 80, 140, 0.4);
+}
+.creative-screen {
+  height: 100%;
+  width: 100%;
+  border-radius: 15% / 6.9%;
+  overflow: hidden;
+  background: #0c0a0e;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4);
+}
+.creative-screen img,
+.creative-screen video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Poster still sits under the video; the video fades in while hovered/playing. */
+.creative-still {
+  position: absolute;
+  inset: 0;
+}
+.creative-vid {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.creative-phone:hover .creative-vid {
+  opacity: 1;
+}
+
+/* ---- Layouts A & B: upright row + casual scatter (default) ----
+   Four phones stand upright. 'row' is a gentle perspective fan; 'scatter' gives
+   each phone a mixed rotateY/rotateZ tilt and vertical offset for a casual look.
+   Hover plays the video IN PLACE: the phone straightens + lifts a touch but never
+   relocates, so the cursor stays on it (no "flying around"). */
+.creatives-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  --rg: clamp(8px, 1.1vw, 22px);
+  gap: var(--rg);
+  padding: clamp(30px, 6vh, 72px) 0;
+  box-sizing: border-box;
+}
+.creatives-row .creative-phone {
+  flex: 0 0 auto;
+  width: clamp(108px, calc((100% - 3 * var(--rg)) / 4), 238px);
+  aspect-ratio: 500 / 1089;
+  transform: perspective(2200px) rotateY(var(--ry, 0deg)) rotateZ(var(--rz, 0deg)) translateY(var(--dy, 0px));
+  transform-origin: center;
+}
+.creatives-row .creative-phone:hover {
+  transform: perspective(2200px) rotateY(0deg) rotateZ(0deg) translateY(calc(var(--dy, 0px) - 16px)) scale(1.05);
+  z-index: 10;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creative-phone { transition: none; }
+}
+
+/* Landscape video frame — laptop chrome around the Ad Format Library demo. */
+.laptop-mock {
+  /* Height-driven so the laptop scales with available vertical space and never
+     overflows the frame into the text on short viewports. The aspect-ratio
+     (a touch taller than the bare 2186/1556 screen to account for the fixed
+     lid/hinge/base chrome) derives the width from the height; internal parts
+     are width:100% of that. max-width keeps the 116%-wide base inside the column. */
+  height: clamp(280px, 54vh, 600px);
+  width: auto;
+  aspect-ratio: 2186 / 1760;
+  max-width: 96%;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 30px 50px rgba(60, 40, 80, 0.28)) drop-shadow(0 8px 16px rgba(255, 154, 107, 0.15));
+}
+.laptop-lid {
+  width: 100%;
+  background: linear-gradient(180deg, #1A1620 0%, #0F0C12 100%);
+  border-radius: 14px 14px 4px 4px;
+  padding: 18px 12px 12px;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+.laptop-camera {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #2a2530;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+.laptop-screen {
+  width: 100%;
+  aspect-ratio: 2186 / 1556;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4);
+}
+.laptop-screen video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.laptop-hinge {
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(180deg, #0a070d 0%, #1a1620 100%);
+  border-radius: 0 0 4px 4px;
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.6);
+  position: relative;
+  z-index: 1;
+}
+/* Aluminum base — trapezoidal silhouette + center notch where the screen tucks in,
+   plus a small semicircle indent at the front lip (lid-open thumb-grip cut). */
+.laptop-base {
+  width: 116%;
+  height: 14px;
+  position: relative;
+  background:
+    linear-gradient(180deg,
+      #d2cdd2 0%,
+      #b4adb3 35%,
+      #8a8388 75%,
+      #5e575c 100%);
+  clip-path: polygon(0 0, 100% 0, 97% 100%, 3% 100%);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -1px 0 rgba(0,0,0,0.2);
+}
+/* Slot/hinge shadow that drops from the screen down into the base */
+.laptop-base::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 78%;
+  height: 3px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0));
+}
+/* Front lip thumb-grip indent */
+.laptop-base::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 6px;
+  background: radial-gradient(ellipse at center top, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 70%);
+  border-radius: 50%;
+}
+/* Side buttons — power on right, volume on left. Subtle, but they sell the iPhone 12 silhouette. */
+.gif-mock::before,
+.gif-mock::after {
+  content: '';
+  position: absolute;
+  background: var(--gif-bezel-button, rgba(0,0,0,0.35));
+  border-radius: 2px;
+  z-index: 1;
+}
+.gif-mock::before {
+  left: -2px;
+  top: 110px;
+  width: 3px;
+  height: 48px;
+  box-shadow: 0 64px 0 var(--gif-bezel-button, rgba(0,0,0,0.35));
+}
+.gif-mock::after {
+  right: -2px;
+  top: 140px;
+  width: 3px;
+  height: 70px;
+}
+.proj-mock {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.proj-tag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 4px 10px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  /* Always sit above the centered media — the phone/stack mocks create their own
+     stacking contexts (transform/perspective) which can otherwise cover the pill. */
+  z-index: 20;
+}
+
+/* Narrow viewport: pill overlays on top of the centered media instead of
+   floating in the empty corner of the wide frame. We center the pill horizontally
+   and tuck it just inside the top edge of the actual media element. */
+@media (max-width: 860px) {
+  .proj-tag {
+    top: 24px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    z-index: 5;
+  }
+}
+
+/* phone frame */
+.phone {
+  width: clamp(240px, 18vw, 320px);
+  aspect-ratio: 1 / 2;
+  background: #1A1620;
+  border-radius: 38px;
+  padding: 8px;
+  box-shadow: 0 40px 80px -20px rgba(60, 40, 80, 0.3), 0 10px 20px -8px rgba(255, 154, 107, 0.2);
+  position: relative;
+  transform: perspective(1200px) rotateY(-8deg) rotateX(2deg);
+  transition: transform 0.6s ease;
+}
+.phone:hover { transform: perspective(1200px) rotateY(-4deg) rotateX(1deg); }
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+}
+.phone-notch {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 22px;
+  background: #000;
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.proj-stack {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.proj-card-mock {
+  width: 280px;
+  height: 380px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85));
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow: 0 20px 50px -15px rgba(120, 80, 140, 0.2);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skel { background: rgba(31,26,36,0.06); border-radius: 6px; }
+.skel.h-line { height: 8px; }
+.skel.h-block { height: 60px; }
+.skel.h-tall { height: 100px; }
+.skel.w-30 { width: 30%; }
+.skel.w-50 { width: 50%; }
+.skel.w-70 { width: 70%; }
+.skel.w-full { width: 100%; }
+
+/* ---------- Shelf section ---------- */
+.shelf-section {
+  position: relative;
+  padding: 120px 0 100px;
+}
+.shelf-head {
+  max-width: var(--container-max);
+  margin: 0 auto 48px;
+  padding: 0 var(--gutter);
+}
+.shelf-head h2 {
+  font-family: var(--serif);
+  font-size: clamp(48px, 6vw, 88px);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  font-weight: 400;
+}
+.shelf-head h2 em {
+  font-style: italic;
+  background: linear-gradient(110deg, #FF8A9B 0%, #FF9A6B 50%, #C896F0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Layout: left nav + right content — exact mirror of .work-sticky */
+.shelf-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 30%) minmax(0, 70%);
+  gap: 0;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  align-items: start;
+}
+.shelf-nav {
+  padding: 80px 0 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: center;
+  padding-right: 8px;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+}
+/* Tab list wrapper — flows as a column on desktop (matches .shelf-nav direction)
+   and is overridden to a horizontal scroller in the narrow-viewport media query. */
+.shelf-nav-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.shelf-nav .nav-section {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 18px;
+  padding: 0 10px;
+}
+.shelf-nav .item {
+  text-align: left;
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  position: relative;
+  border-radius: 6px;
+  transition: all 0.25s ease;
+  font-weight: 400;
+}
+.shelf-nav .item:hover { color: var(--ink); }
+.shelf-nav .item .num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-mute);
+  min-width: 16px;
+}
+.shelf-nav .item.active {
+  color: var(--ink);
+  font-weight: 500;
+  background: linear-gradient(90deg, rgba(255,194,212,0.25) 0%, rgba(216,196,245,0.15) 100%);
+}
+.shelf-nav .item.active .num { color: var(--ink); }
+.shelf-nav .item .bar {
+  display: block;
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF9A6B 0%, #C896F0 100%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+.shelf-nav .item.active .bar { width: 8px; height: 8px; }
+.shelf-nav .item .count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-mute);
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(31,26,36,0.05);
+}
+.shelf-nav .item.active .count {
+  color: var(--ink);
+  background: rgba(255,255,255,0.55);
+}
+
+.shelf-content {
+  min-width: 0;
+}
+
+/* Shelf grid — dense vertically scrollable wall of covers.
+   The wrap no longer constrains height (was 520px); it grows to fit all
+   covers so the grid flows as part of the page scroll instead of having
+   its own inner scrollbar nested inside the bio section. */
+.shelf-grid-wrap {
+  position: relative;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  box-shadow:
+    0 -2px 12px -4px rgba(80, 50, 90, 0.18),
+    0 30px 80px -20px rgba(180, 130, 200, 0.25),
+    0 10px 30px -10px rgba(255, 154, 107, 0.15),
+    0 1px 0 rgba(255,255,255,0.9) inset;
+  padding: 4px;
+  overflow: visible;
+}
+/* Card-chrome modes — applies to the outer shelf canvas window the same way
+   .frame-* applies to the project-card .work-frame. Book covers themselves
+   keep their drop-shadow regardless. */
+.frame-outline .shelf-grid-wrap {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.frame-bare .shelf-grid-wrap {
+  background: transparent;
+  border: 1px solid transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.shelf-grid-scroll {
+  /* Was an inner scroll container (height:100%; overflow-y:auto). Now flows
+     as part of the page scroll — the grid grows to fit every cover so the
+     bio section is one continuous scroll instead of a scrolling box nested
+     inside another scroll. */
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: min-content;
+  align-content: start;
+  gap: 18px;
+  padding: 40px 64px 52px;
+}
+
+/* Responsive column count for the shelf grid.
+   Each cover needs ~110px to fit a long hover-overlay title (e.g. "Baldur's
+   Gate 3 — Larian Studios") without ugly wrapping. Drop columns as the right
+   pane gets squeezed. Numbers are viewport widths since the shelf is the
+   dominant content at that breakpoint. */
+@media (max-width: 1280px) {
+  .shelf-grid-scroll { grid-template-columns: repeat(5, 1fr); padding: 36px 52px 48px; }
+}
+@media (max-width: 1080px) {
+  .shelf-grid-scroll { grid-template-columns: repeat(4, 1fr); padding: 32px 44px 44px; }
+}
+@media (max-width: 920px) {
+  .shelf-grid-scroll { grid-template-columns: repeat(3, 1fr); padding: 28px 32px 40px; }
+}
+
+.book-card {
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.book-card:hover { transform: translateY(-3px) scale(1.02); }
+
+.book-cover-mock {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  height: auto;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.4) inset,
+    -3px 0 0 rgba(0,0,0,0.06) inset,
+    0 16px 36px -12px rgba(60, 40, 80, 0.3),
+    0 4px 10px -4px rgba(60, 40, 80, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.book-cover-img {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  height: auto;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.35) inset,
+    -3px 0 0 rgba(0,0,0,0.08) inset,
+    0 16px 36px -12px rgba(60, 40, 80, 0.32),
+    0 4px 10px -4px rgba(60, 40, 80, 0.22);
+}
+.book-cover-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* Faux page-spine line on book covers (1px vertical at left:6px) was removed
+   per user request — it read as a stray border when the sunset outline was on. */
+
+/* Hover overlay — fades in over any book cover, shows title + author.
+   Layer composition (isolated stacking context):
+     ::before  z=-2  → backdrop-filter blur. SNAPS instantly to opacity 1 on
+                       hover (no transition) so the blur doesn't appear to lag
+                       behind the fade-in of the rest of the overlay.
+     ::after   z=-1  → gradient wash. Fades in over 0.2s; opacity tops out at
+                       --bh-fill-alpha so the wash can be dialed translucent.
+     children  z=0+  → title + author. Fade in over 0.2s at full opacity. */
+.book-hover-overlay {
+  position: absolute;
+  inset: 0;
+  color: var(--bh-fg, #FFF8EE);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 14px 14px 16px;
+  pointer-events: none;
+  isolation: isolate;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.book-hover-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  backdrop-filter: var(--bh-blur, none);
+  -webkit-backdrop-filter: var(--bh-blur, none);
+  opacity: 0; /* no transition — snaps on hover */
+}
+.book-hover-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--bh-bg,
+    linear-gradient(180deg, rgba(255,180,100,0.55) 0%, rgba(255,120,150,0.65) 55%, rgba(110,55,140,0.80) 100%));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.book-hover-overlay .bh-title,
+.book-hover-overlay .bh-author {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.book-card:hover .book-hover-overlay::before { opacity: 1; }
+.book-card:hover .book-hover-overlay::after { opacity: var(--bh-fill-alpha, 1); }
+.book-card:hover .book-hover-overlay .bh-title { opacity: 1; }
+.book-card:hover .book-hover-overlay .bh-author { opacity: 0.82; }
+.book-hover-overlay .bh-title {
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.18;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+.book-hover-overlay .bh-author {
+  font-family: var(--sans);
+  font-size: 11px;
+  line-height: 1.25;
+  margin-top: 6px;
+  font-style: italic;
+  /* Resting opacity is 0 (set above with .bh-title). The hover rule above
+     reveals it at 0.82 to stay slightly muted vs. the title. */
+}
+.book-cover-mock .cover-art {
+  position: absolute;
+  inset: 0;
+  opacity: 0.85;
+}
+/* Spine line on mock covers — removed for the same reason as .book-cover-img::after. */
+.book-cover-mock .cover-meta {
+  position: relative;
+  padding: 14px 14px 16px;
+  text-align: center;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.45) 100%);
+  color: #FFF8EE;
+  font-family: var(--serif);
+}
+.book-cover-mock .cover-meta .ct {
+  font-size: 14px;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.book-cover-mock .cover-meta .ca {
+  font-size: 10px;
+  margin-top: 6px;
+  font-style: italic;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--sans);
+}
+.book-caption .bc-title {
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+}
+.book-caption .bc-meta {
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-top: 4px;
+}
+
+/* Sketchbook card — fits the dense grid */
+.sketch-card-v2 {
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+.sketch-card-v2:hover { transform: translateY(-3px) scale(1.02); }
+
+.sketchbook-mini {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.4) inset,
+    -3px 0 0 rgba(0,0,0,0.06) inset,
+    0 16px 36px -12px rgba(60, 40, 80, 0.3),
+    0 4px 10px -4px rgba(60, 40, 80, 0.2);
+}
+/* Center spine — book-fold illusion */
+.sketchbook-mini::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(0,0,0,0.18);
+  box-shadow: -8px 0 16px -8px rgba(0,0,0,0.18), 8px 0 16px -8px rgba(0,0,0,0.18);
+}
+/* Page-corner ruled lines */
+.sketchbook-mini::after {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 26px, rgba(31,26,36,0.06) 26px 27px);
+  pointer-events: none;
+  opacity: 0.6;
+}
+.sketchbook-mini .sk-doodle {
+  position: absolute;
+  bottom: 22%;
+  left: 8%;
+  width: 35%;
+  height: 55%;
+  border: 1.5px solid;
+  opacity: 0.45;
+  border-radius: 4px;
+  background:
+    linear-gradient(45deg, transparent 48%, currentColor 49%, currentColor 51%, transparent 52%) 0 0/10px 10px,
+    linear-gradient(-45deg, transparent 48%, currentColor 49%, currentColor 51%, transparent 52%) 0 0/10px 10px;
+  mix-blend-mode: multiply;
+}
+.sketchbook-mini .sk-stamp {
+  position: absolute;
+  top: 22px;
+  right: 26px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+  opacity: 0.7;
+  max-width: 40%;
+  text-align: right;
+  line-height: 1.2;
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  position: relative;
+  z-index: 2;
+  padding: 60px var(--gutter);
+  max-width: var(--container-max);
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+}
+.footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
+}
+.footer-left { display: flex; flex-direction: column; gap: 6px; }
+.f-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-bottom: 4px;
+  background: linear-gradient(110deg, #2A2530 30%, #FF8A9B 70%, #C896F0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.f-meta {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.5;
+}
+.f-glyph { font-size: 14px; }
+.f-built { color: var(--ink-mute); }
+.f-built-stamp {
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.footer-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+.f-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  /* Subtle underline at rest, color-shifts to the pink brand accent on hover —
+     matches the "Talk" link on the password screen. */
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(31, 26, 36, 0.25);
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+.f-link:hover {
+  color: #B85C8E;
+  text-decoration-color: #B85C8E;
+}
+
+/* ---------- Shelf: cramped viewport (high zoom / narrow window) ----------
+   Below ~860px the 30/70 split squeezes the nav text into the cards.
+   Switch to a single-column layout with a sticky horizontal nav bar across
+   the top of the section. Above the mobile breakpoint, so still desktop-y. */
+@media (max-width: 860px) {
+  .shelf-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 0 32px;
+  }
+  /* Stacked layout: label on its own row, tabs below — both left-aligned.
+     No card chrome; the bar is just type sitting on the page. */
+  .shelf-nav {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px 0 12px;
+    margin: 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    justify-content: flex-start;
+  }
+  .shelf-nav .nav-section {
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    border: none;
+  }
+  /* Tabs row — horizontal, left-aligned, scroll-x if needed. */
+  .shelf-nav-tabs {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .shelf-nav-tabs::-webkit-scrollbar { display: none; }
+  .shelf-nav .item {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .shelf-nav .item .bar { display: none; }
+  .shelf-nav .item .count { margin-left: 4px; }
+}
+
+/* Extra breathing room between the work section and the shelf section
+   when the shelf nav becomes a sticky horizontal bar. */
+@media (max-width: 860px) {
+  .shelf-section { padding-top: 80px; }
+  .work-section { padding-bottom: 120px; }
+}
+
+/* ============================================================================
+   Custom cursor — variants live under [data-cursor-style="…"] on <html>.
+   The .cur-root layer sits above everything; .custom-cursor-on hides the
+   native cursor.
+   ============================================================================ */
+
+html.custom-cursor-on,
+html.custom-cursor-on body,
+html.custom-cursor-on *,
+html.custom-cursor-on .twk-panel,
+html.custom-cursor-on .twk-panel * {
+  cursor: none !important;
+}
+
+.cur-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  /* Must outrank the Tweaks panel (z-index 2147483646) so the cursor stays
+     visible while picking variants inside the panel. */
+  z-index: 2147483647;
+  /* Lifted into its own layer so updates don't repaint the rest of the page. */
+  will-change: transform;
+}
+.cur-root > * {
+  position: fixed;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ----- Halo V3: bigger dot, idle sparkles, frosted hover -----
+   Resting: 12px gradient dot, no ring. When idle the JS pool spawns small
+   dark sparks radiating outward.
+   Movement: dense soft glow trail (warm + cool blobs from the scheme).
+   Hover: dot melts to 32px filled with the scheme gradient at 60% alpha,
+   masked with a radial gradient so the edge feathers off, and a backdrop
+   blur frosts whatever's under it. No ring. */
+.cur-halo3-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--halo-c1) 0%, var(--halo-c2) 55%, var(--halo-c3) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.5),
+    0 2px 8px rgba(140, 60, 110, 0.32);
+  transition:
+    width 320ms cubic-bezier(0.34, 1.25, 0.64, 1),
+    height 320ms cubic-bezier(0.34, 1.25, 0.64, 1),
+    background 320ms ease,
+    box-shadow 320ms ease,
+    -webkit-backdrop-filter 320ms ease,
+    backdrop-filter 320ms ease,
+    opacity 200ms ease;
+}
+.cur-halo3-dot.hover {
+  width: 32px; height: 32px;
+  /* 60% alpha gradient — denser fill than V2 since the edge feathers via mask. */
+  background: linear-gradient(135deg,
+    rgba(var(--halo-c1-rgb), 0.6) 0%,
+    rgba(var(--halo-c2-rgb), 0.6) 45%,
+    rgba(var(--halo-c3-rgb), 0.6) 100%);
+  box-shadow: 0 6px 20px rgba(140, 90, 160, 0.18);
+  /* Radial mask feathers the disc into a soft-focus halo — solid through ~45%
+     of the radius, then fades to fully transparent at the edge. The mask also
+     clips the backdrop-filter, so the blur fades out gracefully too. */
+  -webkit-mask-image: radial-gradient(circle, #000 35%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0) 100%);
+  mask-image: radial-gradient(circle, #000 35%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0) 100%);
+  /* Frosted-glass effect under the disc. */
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
+  backdrop-filter: blur(6px) saturate(140%);
+}
+.cur-halo3-trail {
+  position: fixed;
+  left: 0; top: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+  filter: blur(1.5px);
+}
+.cur-halo3-spark {
+  position: fixed;
+  left: 0; top: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.cur-halo3-pool { position: fixed; inset: 0; pointer-events: none; }
+
+/* ----- Halo V2: dot-only at rest, melts + ring on hover -----
+   Resting: 8.4px (1.2× of v1) gradient dot — same orange→purple gradient as
+   the highlighter pip in the work / shelf nav. No ring.
+   Hover: dot "melts" up to 36px filled with the same gradient, and a thin
+   1px ring fades in around it. */
+.cur-halo2-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  /* Resting gradient mirrors the "Angela Xie" wordmark stops — deep plum anchors
+     the warm side, pink in the middle, lilac on the cool side. Reads richer at
+     small sizes than the original orange→purple. Colors now come from the
+     selected haloColor scheme (plum / coral / iris). */
+  background: linear-gradient(135deg, var(--halo-c1) 0%, var(--halo-c2) 55%, var(--halo-c3) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.5),
+    0 2px 8px rgba(140, 60, 110, 0.32);
+  /* The morph: width/height ease up so center stays put thanks to translate(-50%, -50%).
+     Slightly overshoot easing for the "melt" feeling without bouncy excess. */
+  transition:
+    width 280ms cubic-bezier(0.34, 1.25, 0.64, 1),
+    height 280ms cubic-bezier(0.34, 1.25, 0.64, 1),
+    box-shadow 280ms ease,
+    opacity 200ms ease,
+    background 280ms ease;
+}
+.cur-halo2-dot.hover {
+  width: 24px; height: 24px;
+  /* Hover disc — same gradient at 40% alpha so the element underneath reads
+     through, giving the "melted disc" feel. */
+  background: linear-gradient(135deg,
+    rgba(var(--halo-c1-rgb), 0.4) 0%,
+    rgba(var(--halo-c2-rgb), 0.4) 45%,
+    rgba(var(--halo-c3-rgb), 0.4) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.2),
+    0 4px 14px rgba(180, 110, 180, 0.28);
+}
+.cur-halo2-ring {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  /* Thin (1px) ring tinted to the cool stop of the scheme. */
+  border: 1px solid rgba(var(--halo-c3-rgb), 0.55);
+  transition:
+    opacity 250ms ease,
+    transform 280ms cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+.cur-halo2-trail {
+  position: fixed;
+  left: 0; top: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+  /* Subtle blur so the trail blobs feel like glow rather than hard dots. */
+  filter: blur(1.5px);
+}
+.cur-halo2-trail-pool { position: fixed; inset: 0; pointer-events: none; }
+
+/* ----- Halo: precise dot + lagging soft ring -----
+   Dot + outline pick up the active palette's accents — orange leads the eye
+   and the ring picks up a softer warm rose so they read as a pair without
+   competing. Hover fill is a deeper pink→lilac wash (~30% alpha). */
+.cur-halo-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--halo-c2);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.6), 0 2px 6px rgba(180, 90, 60, 0.25);
+  transition: transform 120ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 200ms ease;
+}
+.cur-halo-ring {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--halo-c3);
+  transition: transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 200ms ease;
+}
+.cur-halo-ring-fill {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--halo-c1), var(--halo-c3));
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+/* ----- Blob: soft pastel blob with palette-driven gradient ----- */
+.cur-blob {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--pink) 0%, var(--orange) 45%, var(--lilac) 100%);
+  filter: blur(14px) saturate(120%);
+  mix-blend-mode: multiply;
+  transition: opacity 200ms ease, filter 200ms ease;
+}
+html.light-mode .cur-blob { mix-blend-mode: multiply; opacity: 0.7; }
+
+/* ----- Label: dot + contextual pill ----- */
+.cur-label-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--ink);
+  transition: transform 120ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 200ms ease;
+}
+.cur-label-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px -8px rgba(31, 26, 36, 0.4);
+  transform-origin: top left;
+  transition: opacity 200ms ease, transform 250ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.cur-label-glyph { font-size: 11px; opacity: 0.85; }
+
+/* ----- Sparkle: trail of ✻ glyphs ----- */
+.cur-sparkle-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF8A9B, #C896F0);
+  box-shadow: 0 0 12px rgba(255, 138, 155, 0.6);
+  transition: transform 100ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 200ms ease;
+}
+.cur-sparkle-particle {
+  position: fixed;
+  left: 0; top: 0;
+  font-size: 14px;
+  font-family: serif;
+  pointer-events: none;
+  will-change: transform, opacity;
+  line-height: 1;
+}
+
+/* Reduced motion: kill all the lerp transitions; particles + lagged movement
+   feel queasy if the user opted out. Cursor is suppressed entirely below. */
+@media (prefers-reduced-motion: reduce) {
+  .cur-root { display: none; }
+  html.custom-cursor-on,
+  html.custom-cursor-on body,
+  html.custom-cursor-on * { cursor: auto !important; }
+}
+
+/* ---------- Responsive trim ---------- */
+@media (max-width: 760px) {
+  .hero { padding: 24px 24px; min-height: auto; }
+  .hero-sub { grid-template-columns: 1fr; gap: 24px; }
+  .hero-meta { text-align: left; align-items: flex-start; }
+  .hero-meta .row { justify-content: flex-start; }
+  .hero-scroll { left: 32px; }
+  .work-sticky { grid-template-columns: 1fr; padding: 0 32px; }
+  .work-nav { display: none; }
+  /* Override the inline 40px horizontal padding + the work-canvas inline
+     20px right margin so the project card sits flush with the layout's
+     32px edge (matches the other narrow-mode sections). */
+  .work-stage-area { padding: 20px 0 !important; }
+  .work-canvas { margin: 0 !important; }
+  .shelf-section { padding: 80px 0; }
+  .shelf-head { padding: 0 32px; }
+  .shelf-layout { padding: 0 32px; }
+  .shelf-layout { grid-template-columns: 1fr; gap: 24px; }
+  .shelf-nav { position: static; flex-direction: row; flex-wrap: wrap; }
+  .footer { padding: 40px 32px; }
+  .footer-row { flex-direction: column; }
+  .footer-right { align-items: flex-start; }
+}
+
+
+/* ============================================================================
+   "A bit about me" — sits between Work and Shelf.
+   Layout: left rail = section label only (mirrors shelf-nav). Right column
+   carries the portrait + copy. Portrait floats right within the content so
+   the opening paragraphs wrap alongside the face.
+
+   Typography rule: Georgia ONLY on the two emphasized headings — the opening
+   lead paragraph and the "Things I Care Deeply About" subheading. Everything
+   else (principle leads, bodies, outro) uses the default Inter sans.
+   ============================================================================ */
+.about-section {
+  position: relative;
+  padding: 100px 0 60px;
+}
+.about-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 30%) minmax(0, 70%);
+  gap: 0;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  align-items: start;
+}
+
+/* ----- Left rail: just the section label, matches shelf-nav ----- */
+.about-rail {
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px 0 0;
+  /* Stick the label so it stays in view as the long right column scrolls. */
+  position: sticky;
+  top: 80px;
+}
+.about-rail .nav-section {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 0 10px;
+}
+
+/* ----- Right column: portrait + copy ----- */
+.about-content {
+  /* Use plain block flow (not flex) so the floated portrait can wrap text
+     around it. The intro paras wrap alongside the photo; later content
+     clears beneath it.
+     Left padding here matches the inset of shelf book covers (≈57px from
+     the right-column edge) so the three sections share the same visual
+     content-start line. */
+  padding-left: 56px;
+  max-width: 760px;
+}
+
+/* Portrait floats right within the content; opening text wraps alongside it. */
+/* Intro row — opening lead paragraph + round portrait sitting side by side. */
+.about-intro-row {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 18px;
+}
+.about-intro-row .about-lead {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+}
+
+/* Round portrait. Image is portrait-oriented with the face in the lower-mid
+   of the frame, so object-position-y is biased toward the bottom to keep
+   the face centered in the circle crop. */
+.about-portrait {
+  flex-shrink: 0;
+  width: 180px;
+  height: 180px;
+  margin: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 22px 46px -16px rgba(180, 110, 150, 0.32),
+    0 8px 18px -8px rgba(255, 154, 107, 0.16);
+  transition: transform 0.4s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+.about-portrait:hover { transform: scale(1.03); }
+.about-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Photo + caption stack so the figcaption sits beneath the portrait without
+   getting clipped by the figure's overflow:hidden. */
+.who-portrait-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.who-portrait-cap {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-mute);
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+/* Inline links inside the bio copy — thin underline with offset, picks up the
+   active accent gradient on hover so it reads as part of the brand. */
+.about-inline-link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(31, 26, 36, 0.25);
+  transition: text-decoration-color 0.2s ease, color 0.2s ease;
+}
+.about-inline-link:hover {
+  /* Matches the password-screen "Talk" link: shifts to the pink brand accent
+     on hover so all inline text links share one hover language. */
+  color: #B85C8E;
+  text-decoration-color: #B85C8E;
+}
+
+/* Intro lead paragraphs — Georgia (one of the two Georgia exceptions). */
+.about-lead {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  text-wrap: pretty;
+  margin: 0 0 18px 0;
+}
+.about-lead em {
+  font-style: italic;
+  background: linear-gradient(105deg, #B8456E 0%, #E06B5A 35%, #F08A4A 70%, #F5B85A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 500;
+}
+/* Inline accent — three highlighted phrases share the same color stops but
+   pick up a different gradient angle per slot (via --accent-gradient-{1,2,3}
+   set by app.jsx). Single-fallback --accent-gradient is used outside the
+   three-phrase run (e.g. the Tweaks panel swatch). */
+.about-accent {
+  background: var(--accent-gradient, linear-gradient(105deg, #B8456E 0%, #E06B5A 35%, #F08A4A 70%, #F5B85A 100%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.about-lead .about-accent:nth-of-type(1) {
+  background-image: var(--accent-gradient-1, var(--accent-gradient));
+}
+.about-lead .about-accent:nth-of-type(2) {
+  background-image: var(--accent-gradient-2, var(--accent-gradient));
+}
+.about-lead .about-accent:nth-of-type(3) {
+  background-image: var(--accent-gradient-3, var(--accent-gradient));
+}
+.about-lead-soft {
+  font-family: var(--sans);
+  font-size: 17px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+.about-emoji {
+  display: inline-block;
+  font-style: normal;
+  font-size: 0.95em;
+  transform: translateY(-1px);
+}
+
+/* "Things I Care Deeply About" — Georgia subheading (the other Georgia
+   exception). Italic for the editorial pull-quote feel. Clears the float
+   so it sits below the portrait. */
+.about-principles-label {
+  clear: both;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+  font-style: italic;
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 28px 0 18px 0;
+}
+
+/* Principles — Inter, numbered. Lead is bold sans (not Georgia). */
+.about-principles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.about-principles li {
+  display: block;
+  padding: 2px 0;
+}
+.about-principles .ap-body {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+/* Principle lead — Georgia, larger, on its own line so the body sits underneath. */
+.about-principles .ap-lead {
+  display: block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+/* Closing line — Inter. */
+.about-outro {
+  margin: 28px 0 0 0;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* Narrow viewport: stack the columns, drop the float, shrink the photo. */
+@media (max-width: 860px) {
+  .about-section { padding: 60px 0 40px; }
+  .about-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 32px;
+  }
+  .about-rail {
+    position: static;
+    padding: 0;
+  }
+  .about-rail .nav-section { padding: 0; }
+  .about-content { padding-left: 0; max-width: none; }
+  .about-portrait {
+    width: 140px;
+    height: 140px;
+  }
+  .about-intro-row {
+    gap: 20px;
+    flex-direction: row;
+    align-items: center;
+  }
+  .about-lead { font-size: 19px; }
+  .about-lead-soft { font-size: 17px; }
+  .about-principles-label { font-size: 22px; }
+}
+
+
+/* ============================================================================
+   Merged "A bit about me" section — combines old About + Shelf into one
+   five-tab IA. Reuses the existing .shelf-grid-wrap / .about-* leaf styles;
+   only the outer chrome (layout, nav rail, pane wrapper) is new.
+
+   Continuous-scroll layout: nav rail position: sticky on the left so it
+   pins as the user scrolls through five vertically-stacked panes on the
+   right. No inner scroll containers — shelf grids and the paintings wall
+   render at their natural height and contribute to the page scroll. The
+   active tab is computed in JS from which pane is closest to ~30% from
+   the top of the viewport.
+   ============================================================================ */
+.bio-section {
+  position: relative;
+  padding: 120px 0 100px;
+}
+.bio-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 30%) minmax(0, 70%);
+  gap: 0;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  align-items: start;
+}
+
+/* Left rail — same vocabulary as .shelf-nav (numbered items, dot bar).
+   Sticky on the left and anchored to the vertical center of the viewport
+   while the user is anywhere in the bio section. top: 50vh pins the rail's
+   top to mid-viewport; translateY(-50%) then shifts it up by half its own
+   height so the rail itself sits centered. */
+.bio-nav {
+  padding: 0 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 50vh;
+  transform: translateY(-50%);
+  align-self: start;
+}
+.bio-nav .nav-section {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 18px;
+  padding: 0 10px;
+}
+.bio-nav-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+.bio-nav .item {
+  text-align: left;
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  position: relative;
+  border-radius: 999px;
+  transition: all 0.25s ease;
+  font-weight: 400;
+}
+.bio-nav .item:hover { color: var(--ink); }
+.bio-nav .item .num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-mute);
+  min-width: 16px;
+}
+.bio-nav .item.active {
+  color: var(--ink);
+  font-weight: 500;
+  background: linear-gradient(90deg, rgba(255,194,212,0.25) 0%, rgba(216,196,245,0.15) 100%);
+}
+.bio-nav .item.active .num { color: var(--ink); }
+.bio-nav .item .bar {
+  display: block;
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF9A6B 0%, #C896F0 100%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+.bio-nav .item.active .bar { width: 8px; height: 8px; }
+
+/* Two label variants per tab: full label for desktop (bio-tab-label-full),
+   short label for narrow viewports (bio-tab-label-short). Toggled by the
+   @media block below \u2014 only one is visible at a time. */
+.bio-tab-label-full { display: inline; }
+.bio-tab-label-short { display: none; }
+
+/* Right pane wrapper — content gets the same left inset across all tabs so
+   the visual content-start line stays put as the user clicks between tabs.
+   Min-height keeps the pane from collapsing on the short "What I care about"
+   tab; the books tab is ~520px so this matches. */
+/* Right pane wrapper — contains the five vertically-stacked pane slots.
+   No min-height anymore (each pane controls its own intrinsic size). */
+.bio-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+/* Each pane slot is a flow-positioned wrapper around a pane component.
+   Every slot is at least one viewport tall so a single pane fills the
+   user's focus when snapped; tall panes (books/games/sketches) grow
+   beyond 100vh to accommodate their grids and the user scrolls freely
+   within them between snap points.
+
+   scroll-snap-align: start makes each pane's top a snap target. Combined
+   with `scroll-snap-type: y proximity` on <html>, the browser pulls the
+   nearest pane to viewport top WHEN the user lands close to one, but
+   doesn't fight them when they're mid-pane exploring tall content. */
+.bio-pane-slot {
+  scroll-margin-top: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.bio-pane {
+  padding-left: 0;
+  width: 100%;
+}
+.bio-pane-who {
+  /* Two-column layout for the "Who I am" tab: rectangular portrait on the
+     left, all text on the right. Drops the fixed 520px min-height — the
+     enclosing .bio-pane-slot-who handles vertical real estate now.
+     flex-wrap lets the portrait + text stack vertically on narrow widths
+     so the content never overflows the column horizontally.
+
+     Inner horizontal padding lines up with where the books/games/paintings
+     covers start — the shelf content is inset by 16px (.bio-pane-shelf) +
+     4px (.shelf-grid-wrap padding) + 20px (.shelf-grid-scroll inline left)
+     = 40px from the slot's left edge. We match that here with 40px left,
+     and use 40px right (matching .shelf-grid-scroll's inline right). */
+  margin: 0;
+  max-width: none;
+  padding: 0 40px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 32px;
+}
+.bio-pane-care {
+  /* Same horizontal padding system as .bio-pane-who so all five tabs share
+     the same content-start line. */
+  margin: 0;
+  max-width: none;
+  padding: 0 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+}
+
+/* Keep text columns at a readable measure even though the pane now fills
+   the full content column. Without these caps, paragraphs would stretch
+   far wider than is comfortable to read on a wide display. */
+.bio-pane-who .who-text { max-width: 480px; }
+.bio-pane-care .about-principles { max-width: 760px; }
+/* Rectangular portrait variant — overrides the round .about-portrait shape
+   when it sits inside the "Who I am" pane. Locked to the photo's natural
+   5:7 portrait ratio, sized to read alongside ~4 lines of intro copy. */
+.who-portrait {
+  flex-shrink: 0;
+  width: 246px;
+  height: auto;
+  aspect-ratio: 5 / 7;
+  margin: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 22px 46px -16px rgba(180, 110, 150, 0.32),
+    0 8px 18px -8px rgba(255, 154, 107, 0.16);
+  transition: transform 0.4s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+.who-portrait:hover { transform: scale(1.02); }
+.who-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 35%;
+  border-radius: inherit;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.who-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+/* Shelf grid uses its own card chrome — match the same 16px inset so the
+   glass wrap's left edge sits where the works section's project card does. */
+.bio-pane-shelf { padding-left: 16px; }
+
+/* Narrow viewport — stack columns, equal-width tab grid (mirrors the
+   shelf-nav narrow-viewport treatment). */
+@media (max-width: 860px) {
+  .bio-section { padding: 80px 0; }
+  .bio-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 0 32px;
+  }
+  .bio-nav {
+    position: sticky;
+    top: 12px;
+    z-index: 5;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 10px;
+    margin: 0;
+    justify-content: flex-start;
+    transform: none !important;
+    /* Rounded floating card — no outline; shadows on all sides lift it off
+       the background as a discrete component. Backdrop blur keeps the mesh
+       blobs/page colors readable through it. */
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border-radius: 14px;
+    box-shadow:
+      0 -2px 8px -4px rgba(31, 26, 36, 0.06),
+      0 6px 18px -6px rgba(31, 26, 36, 0.14),
+      0 2px 6px -2px rgba(31, 26, 36, 0.08);
+  }
+  .bio-nav .nav-section {
+    margin: 0;
+    padding: 0;
+    /* Header is redundant in narrow mode — the tab strip carries the meaning. */
+    display: none;
+  }
+  .bio-nav-tabs {
+    /* Equal-distributed grid: each tab takes exactly 1/5 of the nav width.
+       minmax(0, 1fr) lets columns shrink if needed (otherwise the text would
+       force them wider on narrow viewports). */
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+  .bio-nav .item {
+    flex-shrink: 0;
+    /* Equal-distributed grid columns mean each tab is exactly 1/5 of the
+       row width. min-width 0 + justify/text-align center the label inside. */
+    min-width: 0;
+    padding: 8px 12px;
+    gap: 8px;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .bio-nav .item .bar { display: none; }
+  /* Hide the "01"/"02" numbers in narrow mode — the labels are tight and
+     the numbers add noise without earning their space. */
+  .bio-nav .item .num { display: none; }
+  /* Swap to the short label variant on narrow viewports so all five tabs
+     fit comfortably in the pinned nav card. */
+  .bio-tab-label-full { display: none; }
+  .bio-tab-label-short { display: inline; }
+  .bio-pane-who,
+  .bio-pane-care { padding-left: 0; max-width: none; }
+  /* Reset desktop max-width caps on the inner text columns so they fill
+     the narrow viewport rather than staying capped at 480/760. */
+  .bio-pane-who .who-text { max-width: none; }
+  .bio-pane-care .about-principles { max-width: none; }
+  .bio-pane-who {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 0;
+    gap: 18px;
+    margin: 0 !important;
+    padding: 8px 0 0;
+  }
+  .bio-pane-care {
+    min-height: 0;
+    justify-content: flex-start;
+    margin: 0 !important;
+    padding: 8px 0 0;
+  }
+  /* Drop the 16px left inset so the shelf grid sits flush within the layout's
+     symmetric 32px padding (matches the Selected Work section's edge). */
+  .bio-pane-shelf { padding-left: 0; }
+  .who-portrait { width: 160px; }
+  .who-text { width: 100%; }
+}
+
+
+/* ============================================================================
+   Paintings gallery — masonry wall of real artwork for the "Things I painted"
+   tab. Manual 3-column flex layout (not CSS columns) so the canvas scrolls
+   VERTICALLY inside its fixed 520px parent — just like the books/games grids.
+   Each painting keeps its natural aspect ratio.
+   ============================================================================ */
+.paintings-scroll {
+  /* Same continuous-scroll treatment as .shelf-grid-scroll — no inner
+     scroll container. The masonry columns grow to fit every painting and
+     flow as part of the page scroll.
+     Padding matches the books/games grid exactly (36/40/48/20) so the
+     three shelves visually align along their left edge. */
+  padding: 36px 40px 48px 20px;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+.painting-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Narrow viewport — tighten paddings/gaps; keep 3 columns. Left padding
+   stays in sync with the books/games grid narrow-viewport treatment. */
+@media (max-width: 1080px) {
+  .paintings-scroll { padding: 32px 28px 40px 20px; gap: 14px; }
+  .painting-col { gap: 14px; }
+}
+
+/* Painting card — image only, no caption. Hover just lifts it slightly. */
+.painting-card {
+  display: block;
+  margin: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  background: #FFFFFF;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 10px 24px -10px rgba(60, 40, 80, 0.22),
+    0 3px 8px -3px rgba(60, 40, 80, 0.14);
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.34, 1.25, 0.64, 1), box-shadow 0.3s ease;
+}
+.painting-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.7) inset,
+    0 20px 38px -12px rgba(60, 40, 80, 0.34),
+    0 6px 14px -4px rgba(60, 40, 80, 0.2);
+}
+.painting-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+
+/* ============================================================================
+   Painting lightbox — click-to-zoom modal triggered from .painting-card.
+   Full-viewport dark backdrop + frosted blur + the painting at its largest
+   readable size. Click backdrop or × to close; ESC also closes (handled in
+   bio.jsx).
+   ============================================================================ */
+.painting-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  /* White-transparent backdrop — preserves the bright palette of the page.
+     Slight backdrop blur to push the background visually behind the painting. */
+  background: rgba(255, 252, 248, 0.78);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 40px 40px;
+  cursor: zoom-out;
+  animation: paint-lb-fade 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+@keyframes paint-lb-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.painting-lightbox-close {
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(31, 26, 36, 0.06);
+  color: var(--ink);
+  font-size: 24px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid rgba(31, 26, 36, 0.12);
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.painting-lightbox-close:hover {
+  background: rgba(31, 26, 36, 0.12);
+  border-color: rgba(31, 26, 36, 0.22);
+  transform: scale(1.05);
+}
+.painting-lightbox-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-height: 100%;
+  max-width: 100%;
+  cursor: default;
+  animation: paint-lb-pop 0.32s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+@keyframes paint-lb-pop {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.painting-lightbox-stage img {
+  display: block;
+  max-width: min(92vw, 1100px);
+  max-height: calc(100vh - 200px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+  /* Soft drop shadow tuned for the light backdrop. */
+  box-shadow:
+    0 30px 70px -18px rgba(80, 50, 100, 0.28),
+    0 12px 24px -10px rgba(80, 50, 100, 0.16);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.painting-lightbox-cap {
+  text-align: center;
+  color: var(--ink);
+}
+.painting-lightbox-cap .plc-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+.painting-lightbox-cap .plc-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .painting-lightbox { padding: 56px 20px 24px; }
+  .painting-lightbox-close { top: 14px; right: 14px; width: 40px; height: 40px; }
+  .painting-lightbox-stage img { max-height: calc(100vh - 180px); }
+  .painting-lightbox-cap .plc-title { font-size: 17px; }
+}
+
+
+/* ============================================================================
+   Accent gradient picker — lives inside the Tweaks panel. Renders one row per
+   preset: a small gradient bar + the preset name. Active row highlighted.
+   ============================================================================ */
+.accent-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 0 4px;
+}
+.accent-sw {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.35);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  font: inherit;
+}
+.accent-sw:hover {
+  background: rgba(255,255,255,0.7);
+  transform: translateY(-1px);
+}
+.accent-sw.active {
+  border-color: rgba(0,0,0,0.28);
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 6px -2px rgba(0,0,0,0.12);
+}
+.accent-sw-bar {
+  width: 64px;
+  height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset;
+}
+.accent-sw-name {
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: rgba(41,38,27,0.85);
+}
+
+/* Accent angles — three current-value pills plus a randomize button. */
+.accent-angles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 0 4px;
+}
+.accent-angles-row {
+  display: flex;
+  gap: 6px;
+}
+.accent-angles-pill {
+  flex: 1;
+  text-align: center;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: rgba(41,38,27,0.7);
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 6px;
+  padding: 5px 4px;
+}
+.accent-randomize {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.55);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(41,38,27,0.9);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.accent-randomize:hover {
+  background: rgba(255,255,255,0.85);
+  border-color: rgba(0,0,0,0.22);
+}
+.accent-randomize:active { transform: translateY(1px); }
+.accent-randomize-icon {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 0.35s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+.accent-randomize:hover .accent-randomize-icon {
+  transform: rotate(180deg);
+}
