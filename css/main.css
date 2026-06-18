@@ -737,6 +737,19 @@ html.font-all-georgia body {
   line-height: 1.6;
   max-width: none;
 }
+.work-blurb-link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(0, 0, 0, 0.3);
+  transition: color 0.18s ease, text-decoration-color 0.18s ease;
+}
+.work-blurb-link:hover {
+  color: #4FA838;
+  text-decoration-color: #4FA838;
+}
 .work-blurb .meta-tags {
   display: flex;
   gap: 6px;
@@ -877,6 +890,35 @@ html.font-all-georgia body {
   height: 100%;
   object-fit: contain;
   display: block;
+}
+
+/* Full landscape design composition (type 'canvas'). The image carries its own
+   scene, so it FILLS the glass frame edge-to-edge with its own 24px radius (so
+   it stays rounded in every frame-chrome mode). Frame is locked to the image's
+   16:10 aspect so object-fit:cover never crops on normal viewports. */
+.work-card:has(.canvas-mock) .work-frame {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: clamp(280px, 64vh, 720px);
+}
+.canvas-mock {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  border-radius: 24px;
+  overflow: hidden;
+}
+.canvas-mock a {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.canvas-mock img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 24px;
 }
 
 /* ---------- Spread phone grid (project 07 — GenAI Ad Creatives) ---------- */

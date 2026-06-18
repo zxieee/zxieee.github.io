@@ -220,6 +220,20 @@ function DiagramMock({ media }) {
 
 }
 
+// Full landscape design composition (type 'canvas') — the image already carries
+// its own background/scene, so it fills the glass frame edge-to-edge. When a
+// `link` is set the whole image becomes a clickable link to the live page.
+function CanvasMock({ media, link }) {
+  const img = <img src={media} alt="" />;
+  return (
+    <div className="canvas-mock">
+      {link ?
+        <a href={link} target="_blank" rel="noopener" data-cursor="view">{img}</a> :
+        img}
+    </div>);
+
+}
+
 // Shared phone — black bezel + screen. The recordings already include the iOS
 // status bar + dynamic island, so we DON'T draw a notch (that produced a double
 // notch). The poster still sits under the video; the video fades in on hover.
@@ -330,10 +344,11 @@ function ProjectMock({ project }) {
       {type === 'gif' && <GifMock media={media} />}
       {type === 'duo' && <DuoMock media={media} media2={project.media2} />}
       {type === 'diagram' && <DiagramMock media={media} />}
+      {type === 'canvas' && <CanvasMock media={media} link={project.link} />}
       {type === 'video' && <VideoMock media={media} />}
       {type === 'creatives' && <CreativesMock media={media} />}
     </div>);
 
 }
 
-Object.assign(window, { MeshBG, TopNav, Marquee, ProjectMock, GifMock, VideoMock, DuoMock, DiagramMock, CreativesMock });
+Object.assign(window, { MeshBG, TopNav, Marquee, ProjectMock, GifMock, VideoMock, DuoMock, DiagramMock, CanvasMock, CreativesMock });

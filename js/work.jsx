@@ -174,7 +174,9 @@ function Work() {
                   <div className="work-blurb">
                     <div>
                       <h3 style={{ fontSize: "24px", whiteSpace: "pre-line" }}>{p.title}</h3>
-                      <p>{p.blurb}</p>
+                      {p.blurbHtml ?
+                        <p dangerouslySetInnerHTML={{ __html: p.blurbHtml }}></p> :
+                        <p>{p.blurb}</p>}
                       <div className="meta-tags">
                         {p.tags.map((t, j) => <span key={j} className="tag">{t}</span>)}
                       </div>
